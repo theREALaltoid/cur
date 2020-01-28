@@ -4,6 +4,10 @@ require("mongoose-currency").loadType(mongoose);
 const Currency = mongoose.Types.Currency;
 
 const assetType = new Schema({
+  postedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
   asset: {
     type: String,
     required: true
@@ -26,3 +30,4 @@ const assetType = new Schema({
     min: 0
   }
 });
+module.exports = mongoose.model("Asset", assetType);

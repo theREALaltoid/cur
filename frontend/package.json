@@ -1,0 +1,45 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.20",
+    "@fortawesome/free-brands-svg-icons": "^5.12.0",
+    "@fortawesome/free-solid-svg-icons": "^5.12.0",
+    "@fortawesome/react-fontawesome": "^0.1.8",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "axios": "^0.19.2",
+    "bootstrap": "^4.4.1",
+    "font-awesome": "^4.7.0",
+    "jquery": "1.9.1 - 3",
+    "popper.js": "^1.16.0",
+    "react": "16.x",
+    "react-dom": "^16.3.0",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.3.1",
+    "reactstrap": "^8.4.1"
+  },
+  "scripts": {
+    "start": "parcel watch ./public/index.html",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

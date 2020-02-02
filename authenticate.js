@@ -49,20 +49,7 @@ exports.verifyAdmin = (req, err, next) => {
     next();
   }
 };
-exports.verifyPoster = (req, err, next) => {
-  let id1 = req.user._id;
-
-  Asset.findById(req.params.assetId).then(asset => {
-    if (id1.equals(asset._id)) {
-      next();
-    } else {
-      err = new Error("You are not an the author. Access Denied");
-      err.status = 403;
-
-      return next(asset._id);
-    }
-  });
-};
+exports.verifyPoster = (req, err, next) => {};
 
 exports.verifyListOwner = (req, err, next) => {
   let id = req.user._id;

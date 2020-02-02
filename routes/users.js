@@ -6,7 +6,11 @@ let userRouter = express.Router();
 const authenticate = require("../authenticate");
 const cors = require("./cors");
 userRouter.use(bodyParser.json());
-userRouter.route("*").options(cors.corsWithOptions, (req, res) => {
+userRouter.route("/signup").options((req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Credentials", true);
   res.sendStatus(200);
 });
 /* GET users listing. */
@@ -31,15 +35,16 @@ userRouter
     }
   );
 
-userRouter.post("/signup", (req, res, next) => {
+userRouter.post("/signup", cors.cors, (req, res, next) => {
   User.register(
     new User({ username: req.body.username }),
     req.body.password,
     (err, user) => {
+      console.log(req.body);
       if (err) {
-        res.statusCode = 500;
+        res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
-        res.json({ err: err });
+        res.json({ user: "exists" });
       } else {
         if (req.body.firstname) {
           user.firstname = req.body.firstname;
@@ -47,55 +52,17 @@ userRouter.post("/signup", (req, res, next) => {
             user.lastname = req.body.lastname;
             user.save((err, user) => {
               if (err) {
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.json({ err: err });
+                res.statusCode = 200;
+
+                res.json({ user: "exists" });
+                console.log("r");
                 return;
               }
-              passport.authenticate("local", (err, user, info) => {
-                if (err) return next(err);
-                if (!user) {
-                  res.statusCode = 401;
-                  res.setHeader("Content-Type", "application/json");
-                  res.json({
-                    success: false,
-                    err: info,
-                    status: "Login Failed"
-                  });
-                }
-                req.logIn(user, err => {
-                  if (err) {
-                    res.statusCode = 401;
-                    res.setHeader("Content-Type", "application/json");
-                    res.json({
-                      success: false,
-                      err: "Couldn't login user",
-                      status: "Login Failed"
-                    });
-                  }
-                  let token = authenticate.getToken({ _id: req.user._id });
-                  res.statusCode = 200;
-                  res.setHeader("Content-Type", "application/json");
-                  res.json({
-                    success: true,
-                    token: token,
-                    status: "Login Successful"
-                  });
-                });
-              })(req, res, next);
-            });
-
-            userRouter.get("/logout", cors.corsWithOptions, (req, res) => {
-              if (req.session) {
-                req.session.destroy();
-                res.clearCookie("session-id");
-                res.redirect("/");
-              } else {
-                let err = new Error("You are not logged in!");
-                err.status = 403;
-                next(err);
-                response.end();
-              }
+              passport.authenticate("local")(req, res, () => {
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.json("Registration Successful!");
+              });
             });
           }
         }
@@ -106,6 +73,7 @@ userRouter.post("/signup", (req, res, next) => {
 
 userRouter.post(
   "/login",
+  cors.corsWithOptions,
 
   (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {

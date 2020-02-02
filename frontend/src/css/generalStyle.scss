@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto&display=swap");
+
+.homepageupper {
+  background-image: url("../img/homepage.jpg");
+  background-size: cover;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+
+  h1 {
+    padding-top: 1em;
+    padding-bottom: 0.5em;
+    font-family: "Roboto", sans-serif;
+    font-size: 6.25em;
+    color: white;
+    @media screen and (max-width: 600px) {
+      font-size: 4em;
+      padding-bottom: 0.001em;
+    }
+    text-decoration: underline;
+  }
+}
+
+.homepagemiddle {
+  text-align: center;
+  background-color: #ff5c72;
+  color: white;
+  svg {
+    margin-left: 10px;
+    margin-bottom: 100px;
+  }
+}
+
+.homeInfo {
+  margin: auto;
+  text-align: center;
+}
+.homepagedownload {
+  padding-bottom: 100px;
+}
+.pageheading {
+  line-height: 5em;
+}

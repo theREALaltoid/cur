@@ -1,0 +1,12 @@
+.container {
+  padding-top: 30px;
+  @media screen and (min-width: 600px) {
+    .row {
+      padding-right: 100px;
+    }
+  }
+
+  .signInButtonGroup {
+    text-align: center;
+  }
+}

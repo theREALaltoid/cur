@@ -3,9 +3,10 @@ import { Button, Form, FormGroup, Label, Input, Container } from "reactstrap";
 import "../css/signup.min.css";
 import { Link } from "react-router-dom";
 const axios = require("axios");
+let signupSuccess = false;
 class Signup extends React.PureComponent {
-  handleClick(event) {
-    var apiBaseUrl = "http://localhost:3000/users/signup";
+  handleClick(postToLogin, event) {
+    var apiBaseUrl = "http://localhost:3000/users/";
     console.log(
       "values",
 
@@ -19,7 +20,7 @@ class Signup extends React.PureComponent {
       password: this.state.password
     };
     axios
-      .post(apiBaseUrl, payload, {
+      .post(apiBaseUrl + "signup", payload, {
         validateStatus: function(status) {
           if (status == 500) {
             alert();
@@ -27,20 +28,40 @@ class Signup extends React.PureComponent {
           return status < 500; // Reject only if the status code is greater than or equal to 500
         }
       })
-      .then(function(response) {
+
+      .then(function(response, signupSuccess, postToLogin) {
         //console.log(response);
-        console.log(response);
+
         if (response.status == 200) {
           if (response.data.user == "exists") {
             alert("username exists");
           }
-          console.log("registration successfull");
+          //Login Postt Request After Successful Registration
+          axios
+            .post(apiBaseUrl + "login", payload, {
+              validateStatus: function(status) {
+                if (status == 500) {
+                  console.log(payload);
+                  alert();
+                }
+                return status < 500; // Reject only if the status code is greater than or equal to 500
+              }
+            })
+
+            .then(function(response, postToLogin) {
+              if (response.status == 200) {
+                this.props.history.push("/");
+                console.log("login ");
+              }
+            })
+            .catch(function(error) {
+              console.log(error);
+            });
         }
         return response;
       })
       .catch(function(error) {
-        console.log(error.toJSON());
-        console.log(response);
+        console.log(error);
       });
   }
 
@@ -66,6 +87,12 @@ class Signup extends React.PureComponent {
             <Input name="username" onChange={this.handleChange} />
           </FormGroup>
           <FormGroup>
+            <Label for="Password">Password</Label>
+            <Input
+              name="password"
+              type="password"
+              onChange={this.handleChange}
+            />
             <Label for="Password">Confirm Password</Label>
             <Input
               name="password"
@@ -82,7 +109,7 @@ class Signup extends React.PureComponent {
           <br />
           <p>All Fields Required</p>
           <p>
-            Or <Link to="/login">Login</Link>
+            Or <Link to="/signin">Login</Link>
           </p>
         </Form>
       </Container>

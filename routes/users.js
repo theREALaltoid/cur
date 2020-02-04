@@ -6,10 +6,10 @@ let userRouter = express.Router();
 const authenticate = require("../authenticate");
 const cors = require("./cors");
 userRouter.use(bodyParser.json());
-userRouter.route("/signup").options((req, res) => {
+userRouter.route("*").options((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "*");
   res.setHeader("Access-Control-Allow-Credentials", true);
   res.sendStatus(200);
 });
@@ -55,7 +55,6 @@ userRouter.post("/signup", cors.cors, (req, res, next) => {
                 res.statusCode = 200;
 
                 res.json({ user: "exists" });
-                console.log("r");
                 return;
               }
               passport.authenticate("local")(req, res, () => {
@@ -73,7 +72,7 @@ userRouter.post("/signup", cors.cors, (req, res, next) => {
 
 userRouter.post(
   "/login",
-  cors.corsWithOptions,
+  cors.cors,
 
   (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
@@ -101,9 +100,7 @@ userRouter.post(
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.json({
-          success: true,
-          token: token,
-          status: "Login Successful"
+          JWT: token
         });
       });
     })(req, res, next);
@@ -123,9 +120,9 @@ userRouter.get("/logout", cors.corsWithOptions, (req, res) => {
   }
 });
 
-userRouter.get("/checkJWTtoken", cors.corsWithOptions, (req, res) => {
+userRouter.get("/checkJWTtoken", cors.cors, (req, res) => {
   passport.authenticate("jwt", { session: false }, (err, user, info) => {
-    if (err) return next(err);
+    if (err) return console.log(err);
 
     if (!user) {
       res.statusCode = 401;

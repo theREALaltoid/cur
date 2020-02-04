@@ -10,11 +10,15 @@ let User = new Schema({
     type: String,
     default: ""
   },
+  firstname: {
+    type: String,
+    default: ""
+  },
   admin: {
     type: Boolean,
     default: false
   }
 });
-
-User.plugin(passportLocalMongoose);
+let options = { limitAttempts: true, maxAttempts: 1 };
+User.plugin(passportLocalMongoose, options);
 module.exports = mongoose.model("User", User);

@@ -2,13 +2,21 @@ var express = require("express");
 var router = express.Router();
 let Asset = require("../models/asset");
 const authenticate = require("../authenticate");
+const cors = require("./cors");
 
 /* GET users listing. */
+router.route("*").options((req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  res.sendStatus(200);
+});
 router
   .route("/")
 
   //Returns Assets For specified User
-  .get(function(req, res, next) {
+  .get(cors.cors, function(req, res, next) {
     Asset.find({})
       .then(
         assets => {

@@ -12,6 +12,10 @@ const assetType = new Schema({
     type: String,
     required: true
   },
+  ouncesIn: {
+    type: Number,
+    required: true
+  },
   purchaseDate: {
     type: Date,
     required: true

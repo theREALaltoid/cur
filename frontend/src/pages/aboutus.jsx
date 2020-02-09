@@ -25,7 +25,7 @@ class Products extends React.Component {
     super(props);
     this.state = {
       labels: {},
-      assetValues: {}
+      assetCosts: {}
     };
   }
   handleClick(event, desiredLength) {

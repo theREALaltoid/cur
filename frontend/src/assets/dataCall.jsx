@@ -6,8 +6,10 @@ import Chart from "chart.js";
 let accessString = localStorage.getItem("JWT");
 let apiBaseUrl = "http://localhost:3000/";
 const axios = require("axios");
-let assetValue = [];
+let assetCost = [];
+let ouncesIn = 0;
 let labels = [];
+let requestedLabels = [];
 let desiredLength;
 
 export default function(desiredLength) {
@@ -27,6 +29,12 @@ export default function(desiredLength) {
       let desiredDate = moment()
         .subtract(desiredLength, "days")
         .format();
+      let sortByDateAsc = function(lhs, rhs) {
+        return lhs > rhs ? 1 : lhs < rhs ? -1 : 0;
+      };
+      Array.prototype.insert = function(index, item) {
+        this.splice(index, 0, item);
+      };
       if (desiredLength > 0) {
         for (var i = 0; i < desiredLength; i++) {
           labels.push(
@@ -39,27 +47,40 @@ export default function(desiredLength) {
         for (var i = 0; i < response.data.length; i++) {
           //  console.log(response.data[i].purchaseDate);
           if (desiredDate <= response.data[i].purchaseDate) {
-            assetValue.push(response.data[i].purchasePrice);
-          }
+            assetCost.push(response.data[i].purchasePrice);
 
-          //console.log(response.data[i].purchaseDate);
-          // /    console.log(desiredDate);
+            requestedLabels.push(
+              moment(response.data[i].purchaseDate).format("MM-DD")
+            );
+
+            ouncesIn += response.data[i].ouncesIn;
+          } else {
+            console.log(desiredDate <= response.data[i].purchaseDate);
+          }
         }
-        console.log(desiredDate);
+        for (var i = 0; i < requestedLabels.length; i++) {
+          if (labels[i] != requestedLabels[i]) {
+            assetCost.insert(i, 0);
+            console.log(requestedLabels[i]);
+          }
+        }
+        console.log(assetCost);
+        console.log(labels);
+        ouncesIn = parseFloat(ouncesIn);
+        ouncesIn.toFixed(2);
       } else if (desiredLength == 0) {
         for (var i = 0; i < response.data.length; i++) {
           labels.push(moment(response.data[i].purchaseDate).format("MM-DD"));
         }
-        let sortByDateAsc = function(lhs, rhs) {
-          return lhs > rhs ? 1 : lhs < rhs ? -1 : 0;
-        };
+
         labels.sort(sortByDateAsc);
         labels = [...new Set(labels)];
         for (var i = 0; i < response.data.length; i++) {
-          assetValue.push(response.data[i].purchasePrice);
+          assetCost.push(response.data[i].purchasePrice);
+          ouncesIn + response.data[i].ouncesIn;
         }
-        console.log(labels);
-        console.log(assetValue);
+        ouncesIn = parseFloat(ouncesIn);
+        ouncesIn.toFixed(2);
       }
 
       var ctx = "myChart";
@@ -70,7 +91,7 @@ export default function(desiredLength) {
           datasets: [
             {
               label: "# of Votes",
-              data: assetValue,
+              data: assetCost,
               backgroundColor: [
                 "rgba(255, 99, 132, 0.2)",
                 "rgba(54, 162, 235, 0.2)",
@@ -103,11 +124,14 @@ export default function(desiredLength) {
           }
         }
       });
-      assetValue = [];
-      labels = [];
     })
 
     .catch(function(error) {
       console.log(error);
     });
+  assetCost = [];
+  ouncesIn = 0;
+  labels = [];
+  requestedLabels = [];
+  desiredLength;
 }

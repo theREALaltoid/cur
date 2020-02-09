@@ -24,19 +24,42 @@ export default function(desiredLength) {
     })
 
     .then(function(response) {
-      //  console.log(truth);
-      //  console.log(response.data.success);
+      let desiredDate = moment()
+        .subtract(desiredLength, "days")
+        .format();
+      if (desiredLength > 0) {
+        for (var i = 0; i < desiredLength; i++) {
+          labels.push(
+            moment()
+              .subtract(i, "days")
+              .format("MM-DD")
+          );
+        }
 
-      for (var i = 0; i < desiredLength; i++) {
-        labels.push(
-          moment()
-            .subtract(i, "days")
-            .format("MM-DD")
-        );
-      }
+        for (var i = 0; i < response.data.length; i++) {
+          //  console.log(response.data[i].purchaseDate);
+          if (desiredDate <= response.data[i].purchaseDate) {
+            assetValue.push(response.data[i].purchasePrice);
+          }
 
-      for (var i = 0; i < response.data.length; i++) {
-        assetValue.push(response.data[i].purchasePrice);
+          //console.log(response.data[i].purchaseDate);
+          // /    console.log(desiredDate);
+        }
+        console.log(desiredDate);
+      } else if (desiredLength == 0) {
+        for (var i = 0; i < response.data.length; i++) {
+          labels.push(moment(response.data[i].purchaseDate).format("MM-DD"));
+        }
+        let sortByDateAsc = function(lhs, rhs) {
+          return lhs > rhs ? 1 : lhs < rhs ? -1 : 0;
+        };
+        labels.sort(sortByDateAsc);
+        labels = [...new Set(labels)];
+        for (var i = 0; i < response.data.length; i++) {
+          assetValue.push(response.data[i].purchasePrice);
+        }
+        console.log(labels);
+        console.log(assetValue);
       }
 
       var ctx = "myChart";

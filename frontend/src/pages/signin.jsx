@@ -62,7 +62,7 @@ class Contacts extends React.PureComponent {
   }
   render() {
     return (
-      <Container>
+      <Container className="signInContainer">
         <Form>
           <FormGroup>
             <Label for="username">Username</Label>

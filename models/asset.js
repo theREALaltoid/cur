@@ -13,11 +13,11 @@ const assetType = new Schema({
     required: true
   },
   purchaseDate: {
-    type: String,
+    type: Date,
     required: true
   },
   sellDate: {
-    type: String
+    type: Date
   },
   purchasePrice: {
     type: Currency,

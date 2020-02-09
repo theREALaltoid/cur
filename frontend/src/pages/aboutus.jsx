@@ -38,19 +38,15 @@ class Products extends React.Component {
         <h1> How is the Portfolio Looking</h1>
         <div className="VictoryChart">
           <canvas id="myChart" />
-          <Button size="lg" block onClick={event => this.handleClick(event, 7)}>
-            Submit
-          </Button>
-          <Button
-            size="lg"
-            block
-            onClick={event => this.handleClick(event, 10)}
-          >
-            Submit
-          </Button>
-          <Button size="lg" block onClick={event => this.handleClick(event, 4)}>
-            Submit
-          </Button>
+          <Row className="justify-content-center">
+            <Button onClick={event => this.handleClick(event, 1)}>1D</Button>
+            <Button onClick={event => this.handleClick(event, 7)}>1W</Button>
+            <Button onClick={event => this.handleClick(event, 31)}>1M</Button>
+            <Button onClick={event => this.handleClick(event, 93)}>3M</Button>
+            <Button onClick={event => this.handleClick(event, 365)}>1Y</Button>
+            <Button onClick={event => this.handleClick(event, 0)}>ALL</Button>
+          </Row>
+
           <h1>Recent Activty</h1>
         </div>
       </Container>

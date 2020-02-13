@@ -32,6 +32,11 @@ const assetType = new Schema({
     type: Currency,
     required: true,
     min: 0
+  },
+  assetValue: {
+    type: Currency,
+    required: true,
+    min: 0
   }
 });
 module.exports = mongoose.model("Asset", assetType);

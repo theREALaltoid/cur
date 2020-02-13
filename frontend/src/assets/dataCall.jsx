@@ -2,7 +2,6 @@ import React from "react";
 import moment from "moment";
 
 import Chart from "chart.js";
-
 let accessString = localStorage.getItem("JWT");
 let apiBaseUrl = "http://localhost:3000/";
 const axios = require("axios");
@@ -12,7 +11,7 @@ let labels = [];
 let requestedLabels = [];
 let desiredLength;
 
-export default function(desiredLength) {
+export default function(desiredLength, spotPrice) {
   axios
     .get(apiBaseUrl + "asset", {
       headers: { Authorization: "Bearer " + accessString },
@@ -26,6 +25,8 @@ export default function(desiredLength) {
     })
 
     .then(function(response) {
+      // Here is where we will calculate the value of the user's assets and then send that to assetWatcher Template
+      console.log(spotPrice);
       let desiredDate = moment()
         .subtract(desiredLength, "days")
         .format();

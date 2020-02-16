@@ -8,6 +8,7 @@ const axios = require("axios");
 let assetCost = [];
 let ouncesIn = [];
 let assetValue = [];
+let neededLabels = [];
 let labels = [];
 let requestedLabels = [];
 let desiredLength;
@@ -41,30 +42,78 @@ export default function(desiredLength, spotPrice) {
       };
       if (desiredLength > 0) {
         for (var i = 0; i < desiredLength; i++) {
-          labels.push(
-            moment()
+          neededLabels.push({
+            date: moment()
               .subtract(i, "days")
-              .format("MM-DD")
-          );
+              .format("MM-DD"),
+            value: 0
+          });
         }
 
         for (var i = 0; i < response.data.length; i++) {
           if (desiredDate <= response.data[i].purchaseDate) {
             assetCost.push(response.data[i].purchasePrice);
-            requestedLabels.push(
-              moment(response.data[i].purchaseDate).format("MM-DD")
-            );
 
             ouncesIn.push(response.data[i].ouncesIn);
-            assetValue.push(response.data[i].ouncesIn * spotPrice);
-          } else {
+            labelsAndAsValObjs.push({
+              date: response.data[i].purchaseDate,
+              value: response.data[i].ouncesIn * spotPrice
+            });
+          }
+        }
+        labelsAndAsValObjs.sort(sortByDateAsc);
+        for (var i = 0; i < labelsAndAsValObjs.length; i++) {
+          requestedLabels.push(
+            moment(labelsAndAsValObjs[i].date)
+              .format("MM-DD")
+              .toString()
+          );
+          assetValue.push(labelsAndAsValObjs[i].value);
+        }
+        labelsAndAsValObjs = [];
+        for (let i = requestedLabels.length - 1; i >= 0; i -= 1) {
+          let n = requestedLabels.lastIndexOf(requestedLabels[i]);
+          ///    console.log(labels);
+          if (
+            requestedLabels.indexOf(requestedLabels[i]) !==
+            requestedLabels.lastIndexOf(requestedLabels[i])
+          ) {
+            // We have to put the actaul .indexOf function instead of defining a const
+            // because .indexOf returns an array
+            assetValue[requestedLabels.lastIndexOf(requestedLabels[i])] =
+              assetValue[requestedLabels.indexOf(requestedLabels[i])] +
+              assetValue[requestedLabels.lastIndexOf(requestedLabels[i])];
+            assetValue.splice(requestedLabels.indexOf(requestedLabels[i]), 1);
+            console.log(spotPrice);
+
+            requestedLabels.splice(
+              requestedLabels.indexOf(requestedLabels[i]),
+              1
+            );
           }
         }
         for (var i = 0; i < requestedLabels.length; i++) {
-          if (labels[i] != requestedLabels[i]) {
-            assetCost.insert(i, 0);
+          labelsAndAsValObjs.push({
+            date: requestedLabels[i],
+            value: assetValue[i]
+          });
+        }
+        assetValue = [];
+        console.log(labelsAndAsValObjs);
+        for (var i = 0; i < labelsAndAsValObjs.length; i++) {
+          const index = neededLabels.findIndex(
+            e => e.date === labelsAndAsValObjs[i].date
+          );
+          if (index === -1) {
+          } else {
+            neededLabels[index] = labelsAndAsValObjs[i];
           }
         }
+        for (var i = 0; i < neededLabels.length; i++) {
+          labels.push(neededLabels[i].date);
+          assetValue.push(neededLabels[i].value);
+        }
+        console.log(labels);
       } else if (desiredLength == 0) {
         for (var i = 0; i < response.data.length; i++) {
           labelsAndAsValObjs.push({
@@ -160,4 +209,5 @@ export default function(desiredLength, spotPrice) {
   requestedLabels = [];
   desiredLength;
   labelsAndAsValObjs = [];
+  neededLabels = [];
 }

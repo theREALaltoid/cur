@@ -52,7 +52,7 @@ class Products extends React.Component {
 
   render() {
     const desiredNumberString = [
-      { number: 7, string: "1M" },
+      { number: 7, string: "7D" },
       { number: 31, string: "1M" },
       { number: 93, string: "3M" },
       { number: 186, string: "6M" },

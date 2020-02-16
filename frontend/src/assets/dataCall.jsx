@@ -6,11 +6,12 @@ let accessString = localStorage.getItem("JWT");
 let apiBaseUrl = "http://localhost:3000/";
 const axios = require("axios");
 let assetCost = [];
-let ouncesIn = 0;
+let ouncesIn = [];
+let assetValue = [];
 let labels = [];
 let requestedLabels = [];
 let desiredLength;
-
+let labelsAndAsValObjs = [];
 export default function(desiredLength, spotPrice) {
   axios
     .get(apiBaseUrl + "asset", {
@@ -26,12 +27,14 @@ export default function(desiredLength, spotPrice) {
 
     .then(function(response) {
       // Here is where we will calculate the value of the user's assets and then send that to assetWatcher Template
-      console.log(spotPrice);
+      spotPrice = parseFloat(spotPrice);
       let desiredDate = moment()
         .subtract(desiredLength, "days")
         .format();
-      let sortByDateAsc = function(lhs, rhs) {
-        return lhs > rhs ? 1 : lhs < rhs ? -1 : 0;
+      let sortByDateAsc = function(a, b) {
+        var dateA = new Date(a.date);
+        var dateB = new Date(b.date);
+        return dateA - dateB;
       };
       Array.prototype.insert = function(index, item) {
         this.splice(index, 0, item);
@@ -46,42 +49,62 @@ export default function(desiredLength, spotPrice) {
         }
 
         for (var i = 0; i < response.data.length; i++) {
-          //  console.log(response.data[i].purchaseDate);
           if (desiredDate <= response.data[i].purchaseDate) {
             assetCost.push(response.data[i].purchasePrice);
-
             requestedLabels.push(
               moment(response.data[i].purchaseDate).format("MM-DD")
             );
 
-            ouncesIn += response.data[i].ouncesIn;
+            ouncesIn.push(response.data[i].ouncesIn);
+            assetValue.push(response.data[i].ouncesIn * spotPrice);
           } else {
-            console.log(desiredDate <= response.data[i].purchaseDate);
           }
         }
         for (var i = 0; i < requestedLabels.length; i++) {
           if (labels[i] != requestedLabels[i]) {
             assetCost.insert(i, 0);
-            console.log(requestedLabels[i]);
           }
         }
-        console.log(assetCost);
-        console.log(labels);
-        ouncesIn = parseFloat(ouncesIn);
-        ouncesIn.toFixed(2);
       } else if (desiredLength == 0) {
         for (var i = 0; i < response.data.length; i++) {
-          labels.push(moment(response.data[i].purchaseDate).format("MM-DD"));
+          labelsAndAsValObjs.push({
+            date: response.data[i].purchaseDate,
+            value: response.data[i].ouncesIn * spotPrice
+          });
+          assetCost.push(response.data[i].purchasePrice);
+          ouncesIn.push(response.data[i].ouncesIn);
+        }
+        let uniqueLabels = [];
+
+        labelsAndAsValObjs.sort(sortByDateAsc);
+        for (var i = 0; i < labelsAndAsValObjs.length; i++) {
+          labels.push(
+            moment(labelsAndAsValObjs[i].date)
+              .format("MM-DD")
+              .toString()
+          );
+          assetValue.push(labelsAndAsValObjs[i].value);
         }
 
-        labels.sort(sortByDateAsc);
-        labels = [...new Set(labels)];
-        for (var i = 0; i < response.data.length; i++) {
-          assetCost.push(response.data[i].purchasePrice);
-          ouncesIn + response.data[i].ouncesIn;
+        let k = 0;
+        for (let i = labels.length - 1; i >= 0; i -= 1) {
+          let n = labels.lastIndexOf(labels[i]);
+          ///    console.log(labels);
+          if (labels.indexOf(labels[i]) !== labels.lastIndexOf(labels[i])) {
+            // We have to put the actaul .indexOf function instead of defining a const
+            // because .indexOf returns an array
+            assetValue[labels.lastIndexOf(labels[i])] =
+              assetValue[labels.indexOf(labels[i])] +
+              assetValue[labels.lastIndexOf(labels[i])];
+            assetValue.splice(labels.indexOf(labels[i]), 1);
+            console.log(spotPrice);
+
+            labels.splice(labels.indexOf(labels[i]), 1);
+          }
+
+          ///console.log(labels.length);
+          k++;
         }
-        ouncesIn = parseFloat(ouncesIn);
-        ouncesIn.toFixed(2);
       }
 
       var ctx = "myChart";
@@ -92,7 +115,7 @@ export default function(desiredLength, spotPrice) {
           datasets: [
             {
               label: "# of Votes",
-              data: assetCost,
+              data: assetValue,
               backgroundColor: [
                 "rgba(255, 99, 132, 0.2)",
                 "rgba(54, 162, 235, 0.2)",
@@ -131,8 +154,10 @@ export default function(desiredLength, spotPrice) {
       console.log(error);
     });
   assetCost = [];
-  ouncesIn = 0;
+  ouncesIn = [];
+  assetValue = [];
   labels = [];
   requestedLabels = [];
   desiredLength;
+  labelsAndAsValObjs = [];
 }

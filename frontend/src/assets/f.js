@@ -1,6 +1,6 @@
 import React from "react";
 import moment from "moment";
-import annotation from "chartjs-plugin-annotation";
+
 import Chart from "chart.js";
 let accessString = localStorage.getItem("JWT");
 let apiBaseUrl = "http://localhost:3000/";
@@ -19,10 +19,11 @@ export default function(desiredLength, spotPrice) {
     })
 
     .then(function(response) {
-      let assetCost = 0;
+      let assetCost = [];
       let ouncesIn = [];
       let assetValue = [];
       let neededLabels = [];
+      let labels = [];
       let requestedLabels = [];
       let labelsAndAsValObjs = [];
       // Here is where we will calculate the value of the user's assets and then send that to assetWatcher Template
@@ -39,8 +40,7 @@ export default function(desiredLength, spotPrice) {
         this.splice(index, 0, item);
       };
       /*Needed labels is an array of JSON objects where value
-      equals 0 and date equals a needed date requested  */
-      console.log(desiredLength);
+      equals 0 and date equals a needed date */
       if (desiredLength > 0) {
         for (let i = 0; i < desiredLength; i++) {
           neededLabels.push({
@@ -53,10 +53,9 @@ export default function(desiredLength, spotPrice) {
         /*Here we push ounces in, how much assets cost,
         and a JSON object where date = the date purchased and
         value equals the ouncesIn times current spotPrice */
-        alert("clicked");
         for (i = 0; i < response.data.length; i++) {
           if (desiredDate <= response.data[i].purchaseDate) {
-            assetCost = assetCost + response.data[i].purchasePrice;
+            assetCost.push(response.data[i].purchasePrice);
             ouncesIn.push(response.data[i].ouncesIn);
             labelsAndAsValObjs.push({
               date: response.data[i].purchaseDate,
@@ -102,7 +101,6 @@ export default function(desiredLength, spotPrice) {
           });
         }
         assetValue = [];
-        requestedLabels = [];
         for (i = 0; i < labelsAndAsValObjs.length; i++) {
           const index = neededLabels.findIndex(
             e => e.date === labelsAndAsValObjs[i].date
@@ -117,15 +115,16 @@ export default function(desiredLength, spotPrice) {
         }
       }
       //If desiredDate is 0 that means the user requested ALL available data
-      else {
+      else if (desiredLength == 0) {
         for (var i = 0; i < response.data.length; i++) {
           labelsAndAsValObjs.push({
             date: response.data[i].purchaseDate,
             value: response.data[i].ouncesIn * spotPrice
           });
-          assetCost = assetCost + response.data[i].purchasePrice;
+          assetCost.push(response.data[i].purchasePrice);
           ouncesIn.push(response.data[i].ouncesIn);
         }
+        let uniqueLabels = [];
 
         labelsAndAsValObjs.sort(sortByDateAsc);
         for (i = 0; i < labelsAndAsValObjs.length; i++) {
@@ -166,7 +165,7 @@ export default function(desiredLength, spotPrice) {
           labels: requestedLabels,
           datasets: [
             {
-              label: "Asset Value",
+              label: "# of Votes",
               data: assetValue,
               backgroundColor: [
                 "rgba(255, 99, 132, 0.2)",
@@ -197,28 +196,9 @@ export default function(desiredLength, spotPrice) {
                 }
               }
             ]
-          },
-          annotation: {
-            annotations: [
-              {
-                type: "line",
-                mode: "horizontal",
-                scaleID: "y-axis-0",
-                value: assetCost,
-                borderColor: "rgb(75, 192, 192)",
-                borderWidth: 1
-              }
-            ]
           }
         }
       });
-      assetCost = 0;
-      ouncesIn = [];
-      assetValue = [];
-      neededLabels = [];
-      requestedLabels = [];
-      labelsAndAsValObjs = [];
-      chart.update();
     })
 
     .catch(function(error) {

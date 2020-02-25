@@ -57,7 +57,7 @@ class Products extends React.Component {
       { number: 93, string: "3M" },
       { number: 186, string: "6M" },
       { number: 365, string: "1Y" },
-      { number: 0, string: "ALL" }
+      { number: -1, string: "ALL" }
     ];
     const selectorButtons = desiredNumberString.map(desired => (
       <Button

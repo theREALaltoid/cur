@@ -7,6 +7,9 @@ let apiBaseUrl = "http://localhost:3000/";
 const axios = require("axios");
 
 export default function(desiredLength, spotPrice) {
+  if (window.chart && window.chart !== null) {
+    window.chart.destroy();
+  }
   axios
     .get(apiBaseUrl + "asset", {
       headers: { Authorization: "Bearer " + accessString },
@@ -158,9 +161,8 @@ export default function(desiredLength, spotPrice) {
           }
         }
       }
-
-      var ctx = "myChart";
-      let myChart = new Chart(ctx, {
+      var ctx = document.getElementById("myChart").getContext("2d");
+      window.chart = new Chart(ctx, {
         type: "line",
         data: {
           labels: requestedLabels,
@@ -218,7 +220,6 @@ export default function(desiredLength, spotPrice) {
       neededLabels = [];
       requestedLabels = [];
       labelsAndAsValObjs = [];
-      chart.update();
     })
 
     .catch(function(error) {

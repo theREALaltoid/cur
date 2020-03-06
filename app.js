@@ -2,17 +2,17 @@ let createError = require("http-errors");
 let express = require("express");
 let path = require("path");
 let userRouter = require("./routes/users");
-
+let assetRouter = require("./routes/asset");
+let apiRouter = require("./routes/api");
 let passport = require("passport");
 let authenticate = require("./authenticate");
 let config = require("./config.js");
 let logger = require("morgan");
-let assetRouter = require("./routes/asset");
 
 let cookieParser = require("cookie-parser");
 let app = express();
 mongoose = require("mongoose");
-
+require("dotenv").config();
 const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
@@ -38,7 +38,7 @@ app.use(passport.initialize());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/asset", assetRouter);
 app.use("/users", userRouter);
-
+app.use("/api", apiRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

@@ -20,6 +20,8 @@ import aboutUs from "../img/aboutUs.jpg";
 const axios = require("axios");
 import ReactDOM from "react-dom";
 import dataCall from "../assets/dataCall";
+import getOuncesCall from "../assets/ouncesCall";
+
 import apiKey from "../assets/apikey.jsx";
 
 let apiUrl =
@@ -31,16 +33,22 @@ class Products extends React.Component {
     this.state = {
       labels: {},
       assetCosts: {},
-      spotPrice: 0
+      spotPrice: 0,
+      ouncesIn: 0,
+      assetValue: 0
     };
   }
 
   componentDidMount() {
+    getOuncesCall().then(data => {
+      this.setState({
+        ouncesIn: data
+      });
+    });
     getSpotPrice(apiUrl, apiKey).then(data => {
       this.setState({
         spotPrice: data
       });
-      console.log(this.state.spotPrice);
     });
     let spotPrice = this.state.spotPrice;
     dataCall(0, spotPrice);
@@ -48,9 +56,15 @@ class Products extends React.Component {
 
   handleClick(event, desiredLength, spotPrice) {
     dataCall(desiredLength, spotPrice);
+    getOuncesCall().then(data => {
+      this.setState({
+        ouncesIn: data
+      });
+    });
   }
 
   render() {
+    let assetValue = this.state.ouncesIn * this.state.spotPrice;
     const desiredNumberString = [
       { number: 7, string: "7D" },
       { number: 31, string: "1M" },
@@ -68,7 +82,6 @@ class Products extends React.Component {
         {desired.string}
       </Button>
     ));
-
     return (
       <Container>
         <h1> How is the Portfolio Looking</h1>
@@ -77,6 +90,9 @@ class Products extends React.Component {
           <Row className="justify-content-center">{selectorButtons}</Row>
 
           <h1>Your Portfolio</h1>
+          <h1>You have {this.state.ouncesIn} Troy Ounces in the vault</h1>
+          <h1>It is worth ${assetValue.toFixed(2)}</h1>
+
           <Row className="justify-content-center"></Row>
         </div>
       </Container>

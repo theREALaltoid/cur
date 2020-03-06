@@ -34,29 +34,29 @@ export default function(desiredLength, spotPrice) {
         .subtract(desiredLength, "days")
         .format();
       let sortByDateAsc = function(a, b) {
-        var dateA = new Date(a.date);
-        var dateB = new Date(b.date);
-        return dateA - dateB;
+        if (a.date > b.date) return 1;
+        if (a.date < b.date) return -1;
+        return 0;
       };
       Array.prototype.insert = function(index, item) {
         this.splice(index, 0, item);
       };
       /*Needed labels is an array of JSON objects where value
       equals 0 and date equals a needed date requested  */
-      console.log(desiredLength);
       if (desiredLength > 0) {
         for (let i = 0; i < desiredLength; i++) {
           neededLabels.push({
             date: moment()
               .subtract(i, "days")
-              .format("MM-DD"),
+              .format(),
             value: 0
           });
         }
+        neededLabels.sort(sortByDateAsc);
+
         /*Here we push ounces in, how much assets cost,
         and a JSON object where date = the date purchased and
         value equals the ouncesIn times current spotPrice */
-        alert("clicked");
         for (i = 0; i < response.data.length; i++) {
           if (desiredDate <= response.data[i].purchaseDate) {
             assetCost = assetCost + response.data[i].purchasePrice;
@@ -70,13 +70,8 @@ export default function(desiredLength, spotPrice) {
         /* Sort labelsAndAsValObjs array of objects by asscending date
         and then push the respective JSON value to different arrays
          */
-        labelsAndAsValObjs.sort(sortByDateAsc);
         for (i = 0; i < labelsAndAsValObjs.length; i++) {
-          requestedLabels.push(
-            moment(labelsAndAsValObjs[i].date)
-              .format("MM-DD")
-              .toString()
-          );
+          requestedLabels.push(labelsAndAsValObjs[i].date);
           assetValue.push(labelsAndAsValObjs[i].value);
         }
         labelsAndAsValObjs = [];
@@ -101,21 +96,28 @@ export default function(desiredLength, spotPrice) {
         for (i = 0; i < requestedLabels.length; i++) {
           labelsAndAsValObjs.push({
             date: requestedLabels[i],
+
             value: assetValue[i]
           });
+          console.log(requestedLabels[i]);
         }
         assetValue = [];
         requestedLabels = [];
         for (i = 0; i < labelsAndAsValObjs.length; i++) {
           const index = neededLabels.findIndex(
-            e => e.date === labelsAndAsValObjs[i].date
+            e =>
+              moment(e.date).format("MM-DD-YYYY") ===
+              moment(labelsAndAsValObjs[i].date).format("MM-DD-YYYY")
           );
           if (index > -1) {
             neededLabels[index] = labelsAndAsValObjs[i];
           }
         }
+
+        console.log(neededLabels);
+
         for (i = 0; i < neededLabels.length; i++) {
-          requestedLabels.push(neededLabels[i].date);
+          requestedLabels.push(moment(neededLabels[i].date).format("MM-DD"));
           assetValue.push(neededLabels[i].value);
         }
       }

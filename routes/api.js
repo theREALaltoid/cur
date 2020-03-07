@@ -1,6 +1,8 @@
 var express = require("express");
 var router = express.Router();
 let Spot = require("../models/spotPrice");
+let apiKey = process.env.alphaKey;
+
 const authenticate = require("../authenticate");
 const cors = require("./cors");
 let fetch = require("node-fetch");
@@ -25,33 +27,49 @@ router
 
   //Returns Assets For specified User
   .get(cors.cors, function(req, res, next) {
-    Spot.find({})
+    Spot.find({
+      date: {
+        $gte: req.params.startDate,
+        $lt: req.params.endDate
+      }
+    })
       .then(
         spots => {
-          if (spots.length == req.query.end_date - req.query.start_date) {
+          if (spots.length == req.params.endDate - req.params.startDate) {
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
-            res.json(spots);
+            res.json(spots + true);
           } else {
-            console.log(process.env.metalsApi);
-            end_date = req.query.end_date;
-            start_date = req.query.start_date;
+            console.log(process.env.alphaKey);
+            end_date = req.params.endDate;
+            start_date = req.params.startDate;
             fetch(
-              "https://metals-api.com/api/timeseries?access_key=" +
-                process.env.metalsApi +
-                "&start_date=" +
-                start_date +
-                "&end_date=" +
-                end_date,
+              "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAG&to_currency=USD&apikey=" +
+                process.env.alphaKey,
               {
-                method: "GET",
-                headers: { "Content-Type": "application/json" }
+                method: "GET"
               }
             )
+              .then(response => response.json())
+
               .then(response => {
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.json(response);
+                Spot.create({
+                  date:
+                    response["Realtime Currency Exchange Rate"][
+                      "6. Last Refreshed"
+                    ],
+                  spotPrice: parseFloat(
+                    response["Realtime Currency Exchange Rate"]["9. Ask Price"]
+                  )
+                }).then(
+                  assets => {
+                    console.log("assets Created ", assets);
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.json(assets);
+                  },
+                  err => next(err)
+                );
               })
 
               .catch(err => {

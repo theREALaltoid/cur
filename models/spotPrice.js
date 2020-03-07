@@ -5,10 +5,11 @@ const Currency = mongoose.Types.Currency;
 
 const assetSnap = new Schema({
   date: {
-    type: Date
+    type: Date,
+    required: true
   },
   spotPrice: {
-    type: Currency,
+    type: Number,
     required: true,
     min: 0
   }

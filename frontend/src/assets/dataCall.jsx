@@ -2,11 +2,12 @@ import React from "react";
 import moment from "moment";
 import annotation from "chartjs-plugin-annotation";
 import Chart from "chart.js";
+import getHistoricalSpotPrices from "./getHistoricalSpotPrice";
+
 let accessString = localStorage.getItem("JWT");
 let apiBaseUrl = "http://localhost:3000/";
 const axios = require("axios");
-
-export default function(desiredLength, spotPrice) {
+export default function(desiredLength, spotPrice, historicalSpotPrice) {
   if (window.chart && window.chart !== null) {
     window.chart.destroy();
   }
@@ -23,6 +24,7 @@ export default function(desiredLength, spotPrice) {
 
     .then(function(response) {
       let assetCost = 0;
+
       let ouncesIn = [];
       let assetValue = [];
       let neededLabels = [];
@@ -52,6 +54,9 @@ export default function(desiredLength, spotPrice) {
             value: 0
           });
         }
+        /* Sort labelsAndAsValObjs array of objects by asscending date
+        and then push the respective JSON value to different arrays
+         */
         neededLabels.sort(sortByDateAsc);
 
         /*Here we push ounces in, how much assets cost,
@@ -67,9 +72,7 @@ export default function(desiredLength, spotPrice) {
             });
           }
         }
-        /* Sort labelsAndAsValObjs array of objects by asscending date
-        and then push the respective JSON value to different arrays
-         */
+
         for (i = 0; i < labelsAndAsValObjs.length; i++) {
           requestedLabels.push(labelsAndAsValObjs[i].date);
           assetValue.push(labelsAndAsValObjs[i].value);
@@ -123,11 +126,20 @@ export default function(desiredLength, spotPrice) {
       }
       //If desiredDate is 0 that means the user requested ALL available data
       else {
+        let endDate = response.data[response.data.length - 1].purchaseDate;
+        let startDate = response.data[0].purchaseDate;
+
+        getHistoricalSpotPrices(startDate, endDate).then(data => {
+          let historicalSpotPrice = data;
+        });
+        console.log(dDate);
+
         for (var i = 0; i < response.data.length; i++) {
           labelsAndAsValObjs.push({
             date: response.data[i].purchaseDate,
             value: response.data[i].ouncesIn * spotPrice
           });
+
           assetCost = assetCost + response.data[i].purchasePrice;
           ouncesIn.push(response.data[i].ouncesIn);
         }

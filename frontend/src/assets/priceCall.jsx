@@ -2,7 +2,8 @@ import React from "react";
 import moment from "moment";
 import apiKey from "./apikey.jsx";
 const axios = require("axios");
-
+let apiUrl =
+  "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAG&to_currency=USD&apikey=";
 export default function getSpotPrice(apiUrl, apiKey) {
   return axios
     .get(apiUrl + apiKey, {

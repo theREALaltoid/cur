@@ -16,11 +16,14 @@ export default function getOuncesCall() {
     })
 
     .then(function(response) {
-      let ouncesIn = 0;
-
+      let labelsAndAsValObjs = [];
       for (let i = 0; i < response.data.length; i++) {
-        ouncesIn = ouncesIn + response.data[i].ouncesIn;
+        labelsAndAsValObjs.push({
+          date: response.data[i].purchaseDate,
+          value: response.data[i].assetValue / 100,
+          ouncesIn: response.data[i].ouncesIn
+        });
       }
-      return ouncesIn;
+      return labelsAndAsValObjs;
     });
 }

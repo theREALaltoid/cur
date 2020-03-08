@@ -8,7 +8,13 @@ import {
   Input,
   Container,
   Row,
-  Col
+  Col,
+  Card,
+  CardImg,
+  CardText,
+  CardBody,
+  CardTitle,
+  CardSubtitle
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import Chart from "chart.js";
@@ -33,6 +39,7 @@ class Products extends React.Component {
     this.state = {
       labels: {},
       assetCosts: {},
+      labelsAndAsValObjs: {},
       spotPrice: 0,
       ouncesIn: 0,
       assetValue: 0,
@@ -42,8 +49,15 @@ class Products extends React.Component {
 
   componentDidMount() {
     getOuncesCall().then(data => {
+      let ouncesIn = 0;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].ouncesIn) {
+          ouncesIn = ouncesIn + data[i].ouncesIn;
+        }
+      }
       this.setState({
-        ouncesIn: data
+        labelsAndAsValObjs: data,
+        ouncesIn: ouncesIn
       });
     });
     getSpotPrice(apiUrl, apiKey).then(data => {
@@ -58,8 +72,15 @@ class Products extends React.Component {
   handleClick(event, desiredLength, spotPrice) {
     dataCall(desiredLength, spotPrice);
     getOuncesCall().then(data => {
+      let ouncesIn = 0;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].ouncesIn) {
+          ouncesIn = ouncesIn + data[i].ouncesIn;
+        }
+      }
       this.setState({
-        ouncesIn: data
+        labelsAndAsValObjs: data,
+        ouncesIn: ouncesIn
       });
     });
   }
@@ -88,7 +109,25 @@ class Products extends React.Component {
   }
 
   render() {
+    const assetData = this.state.labelsAndAsValObjs;
+    console.log(assetData);
+    let assetTags = <div></div>;
+    if (assetData.length > 0) {
+      assetTags = assetData.map(asset => (
+        <div>
+          <Card>
+            <CardBody>
+              <CardTitle>Purchase Date:{asset.date}</CardTitle>
+              <CardSubtitle>Ounces In: {asset.ouncesIn}</CardSubtitle>
+              <CardText>{asset.description}</CardText>
+            </CardBody>
+          </Card>
+        </div>
+      ));
+    }
+
     let assetValue = this.state.ouncesIn * this.state.spotPrice;
+
     const desiredNumberString = [
       { number: 7, string: "7D" },
       { number: 31, string: "1M" },
@@ -106,26 +145,28 @@ class Products extends React.Component {
         {desired.string}
       </Button>
     ));
+
     return (
       <Container>
-        <Modal value="Create Entry" />
-        <Button
-          class="toggle-button"
-          id="centered-toggle-button"
-          onClick={event => {
-            this.showModal(event);
-          }}
-        >
-          Toggle
-        </Button>
         <h1> How is the Portfolio Looking</h1>
         <div className="VictoryChart">
-          <canvas id="myChart" />
-          <Row className="justify-content-center">{selectorButtons}</Row>
+          <Row>
+            <Col md="8">
+              <canvas id="myChart" />
+              <Row className="justify-content-center">{selectorButtons}</Row>
 
-          <h1>Your Portfolio</h1>
-          <h1>You have {this.state.ouncesIn} Troy Ounces in the vault</h1>
-          <h1>It is worth ${assetValue.toFixed(2)}</h1>
+              <h1>Your Portfolio</h1>
+              <h1>You have {this.state.ouncesIn} Troy Ounces in the vault</h1>
+              <h1>It is worth ${assetValue.toFixed(2)}</h1>
+            </Col>
+            <Col className="centerCol" md="3">
+              {" "}
+              {assetTags}
+            </Col>
+            <Col md="1">
+              <Modal value="Create Entry" />
+            </Col>
+          </Row>
 
           <Row className="justify-content-center"></Row>
         </div>

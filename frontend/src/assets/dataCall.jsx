@@ -68,7 +68,7 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
             ouncesIn.push(response.data[i].ouncesIn);
             labelsAndAsValObjs.push({
               date: response.data[i].purchaseDate,
-              value: response.data[i].ouncesIn * spotPrice
+              value: response.data[i].assetValue / 100
             });
           }
         }
@@ -120,7 +120,9 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         console.log(neededLabels);
 
         for (i = 0; i < neededLabels.length; i++) {
-          requestedLabels.push(moment(neededLabels[i].date).format("MM-DD"));
+          requestedLabels.push(
+            moment(neededLabels[i].date).format("MM-DD-YYYY")
+          );
           assetValue.push(neededLabels[i].value);
         }
       }
@@ -132,12 +134,11 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         getHistoricalSpotPrices(startDate, endDate).then(data => {
           let historicalSpotPrice = data;
         });
-        console.log(dDate);
 
         for (var i = 0; i < response.data.length; i++) {
           labelsAndAsValObjs.push({
             date: response.data[i].purchaseDate,
-            value: response.data[i].ouncesIn * spotPrice
+            value: response.data[i].assetValue / 100
           });
 
           assetCost = assetCost + response.data[i].purchasePrice;
@@ -148,7 +149,7 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         for (i = 0; i < labelsAndAsValObjs.length; i++) {
           requestedLabels.push(
             moment(labelsAndAsValObjs[i].date)
-              .format("MM-DD")
+              .format("MM-DD-YYYY")
               .toString()
           );
           assetValue.push(labelsAndAsValObjs[i].value);

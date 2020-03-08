@@ -6,7 +6,11 @@ let accessString = localStorage.getItem("JWT");
 const apiBaseUrl = "http://localhost:3000/";
 const axios = require("axios");
 
-export default function getHistoricalSpotPrices(endDate, startDate) {
+export default function getHistoricalSpotPrices(
+  endDate,
+  startDate,
+  neededLabels
+) {
   return axios
     .get(
       "http://localhost:3000/api",
@@ -19,8 +23,8 @@ export default function getHistoricalSpotPrices(endDate, startDate) {
         },
         validateStatus: function(status) {
           if (status == 500) {
-            console.log(payload);
-            alert();
+            console.log(startDate);
+            alert(startDate);
           }
           return status < 500; // Reject only if the status code is greater than or equal to 500
         }
@@ -28,6 +32,6 @@ export default function getHistoricalSpotPrices(endDate, startDate) {
     )
 
     .then(function(response) {
-      return response;
+      return response.data;
     });
 }

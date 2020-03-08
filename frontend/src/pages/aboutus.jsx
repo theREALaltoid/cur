@@ -16,7 +16,7 @@ import Chart from "chart.js";
 import "../css/aboutUs.min.css";
 import aboutusTwo from "../img/aboutustwo.jpg";
 import aboutUs from "../img/aboutUs.jpg";
-
+import Modal from "../assets/model";
 const axios = require("axios");
 import ReactDOM from "react-dom";
 import dataCall from "../assets/dataCall";
@@ -35,7 +35,8 @@ class Products extends React.Component {
       assetCosts: {},
       spotPrice: 0,
       ouncesIn: 0,
-      assetValue: 0
+      assetValue: 0,
+      show: false
     };
   }
 
@@ -62,6 +63,29 @@ class Products extends React.Component {
       });
     });
   }
+  showModal = event => {
+    this.setState({
+      show: !this.state.show
+    });
+  };
+  createEntry(event) {
+    axios
+      .post("/http://localhost:3000/asset", {
+        asset: this.state.asset,
+        purchaseDate: this.state.purchaseDate,
+        sellDate: this.state.purchaseDate,
+        purchasePrice: this.state.purchaseDate,
+        sellPrice: this.state.sellPrice,
+        ouncesIn: this.state.ouncesIn,
+        assetValue: this.state.assetValue
+      })
+      .then(function(response) {
+        console.log(response);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
 
   render() {
     let assetValue = this.state.ouncesIn * this.state.spotPrice;
@@ -84,6 +108,16 @@ class Products extends React.Component {
     ));
     return (
       <Container>
+        <Modal value="Create Entry" />
+        <Button
+          class="toggle-button"
+          id="centered-toggle-button"
+          onClick={event => {
+            this.showModal(event);
+          }}
+        >
+          Toggle
+        </Button>
         <h1> How is the Portfolio Looking</h1>
         <div className="VictoryChart">
           <canvas id="myChart" />

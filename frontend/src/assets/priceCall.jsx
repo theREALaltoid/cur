@@ -10,7 +10,7 @@ export default function getSpotPrice(apiUrl, apiKey) {
       validateStatus: function(status) {
         if (status == 500) {
           console.log(payload);
-          alert();
+          alert("s");
         }
         return status < 500; // Reject only if the status code is greater than or equal to 500
       }

@@ -52,7 +52,7 @@ class Products extends React.Component {
       });
     });
     let spotPrice = this.state.spotPrice;
-    dataCall(0, spotPrice);
+    dataCall(-1, spotPrice);
   }
 
   handleClick(event, desiredLength, spotPrice) {

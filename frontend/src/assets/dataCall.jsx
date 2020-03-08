@@ -45,6 +45,64 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
       };
       /*Needed labels is an array of JSON objects where value
       equals 0 and date equals a needed date requested  */
+
+      /*Here we push ounces in, how much assets cost,
+        and a JSON object where date = the date purchased and
+        value equals the ouncesIn times current spotPrice */
+      /*If the desiredLength is a number greater than -1 that means the user selected
+        a timeframe and not all their data. Therefore we need to have a condition on the
+        dates selected*/
+      for (let i = 0; i < response.data.length; i++) {
+        if (desiredDate <= response.data[i].purchaseDate && desiredLength > 0) {
+          assetCost = assetCost + response.data[i].purchasePrice;
+          ouncesIn.push(response.data[i].ouncesIn);
+          labelsAndAsValObjs.push({
+            date: response.data[i].purchaseDate,
+            value: response.data[i].assetValue / 100
+          });
+        } else if (desiredLength < 0) {
+          assetCost = assetCost + response.data[i].purchasePrice;
+          ouncesIn.push(response.data[i].ouncesIn);
+          labelsAndAsValObjs.push({
+            date: response.data[i].purchaseDate,
+            value: response.data[i].assetValue / 100
+          });
+        }
+      }
+
+      for (let i = 0; i < labelsAndAsValObjs.length; i++) {
+        requestedLabels.push(labelsAndAsValObjs[i].date);
+        assetValue.push(labelsAndAsValObjs[i].value);
+      }
+      labelsAndAsValObjs = [];
+      for (let i = requestedLabels.length - 1; i >= 0; i -= 1) {
+        let n = requestedLabels.lastIndexOf(requestedLabels[i]);
+        if (
+          requestedLabels.indexOf(requestedLabels[i]) !==
+          requestedLabels.lastIndexOf(requestedLabels[i])
+        ) {
+          // We have to put the actual .indexOf function instead of defining a const
+          // because .indexOf returns an array
+          assetValue[requestedLabels.lastIndexOf(requestedLabels[i])] =
+            assetValue[requestedLabels.indexOf(requestedLabels[i])] +
+            assetValue[requestedLabels.lastIndexOf(requestedLabels[i])];
+          assetValue.splice(requestedLabels.indexOf(requestedLabels[i]), 1);
+          requestedLabels.splice(
+            requestedLabels.indexOf(requestedLabels[i]),
+            1
+          );
+        }
+      }
+
+      for (let i = 0; i < requestedLabels.length; i++) {
+        labelsAndAsValObjs.push({
+          date: requestedLabels[i],
+          value: assetValue[i]
+        });
+      }
+      assetValue = [];
+      requestedLabels = [];
+
       if (desiredLength > 0) {
         for (let i = 0; i < desiredLength; i++) {
           neededLabels.push({
@@ -55,127 +113,48 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
           });
         }
         /* Sort labelsAndAsValObjs array of objects by asscending date
-        and then push the respective JSON value to different arrays
-         */
+          and then push the respective JSON value to different arrays
+           */
         neededLabels.sort(sortByDateAsc);
-
-        /*Here we push ounces in, how much assets cost,
-        and a JSON object where date = the date purchased and
-        value equals the ouncesIn times current spotPrice */
-        for (i = 0; i < response.data.length; i++) {
-          if (desiredDate <= response.data[i].purchaseDate) {
-            assetCost = assetCost + response.data[i].purchasePrice;
-            ouncesIn.push(response.data[i].ouncesIn);
-            labelsAndAsValObjs.push({
-              date: response.data[i].purchaseDate,
-              value: response.data[i].assetValue / 100
-            });
-          }
-        }
-
-        for (i = 0; i < labelsAndAsValObjs.length; i++) {
-          requestedLabels.push(labelsAndAsValObjs[i].date);
-          assetValue.push(labelsAndAsValObjs[i].value);
-        }
-        labelsAndAsValObjs = [];
-        for (i = requestedLabels.length - 1; i >= 0; i -= 1) {
-          let n = requestedLabels.lastIndexOf(requestedLabels[i]);
-          if (
-            requestedLabels.indexOf(requestedLabels[i]) !==
-            requestedLabels.lastIndexOf(requestedLabels[i])
-          ) {
-            // We have to put the actual .indexOf function instead of defining a const
-            // because .indexOf returns an array
-            assetValue[requestedLabels.lastIndexOf(requestedLabels[i])] =
-              assetValue[requestedLabels.indexOf(requestedLabels[i])] +
-              assetValue[requestedLabels.lastIndexOf(requestedLabels[i])];
-            assetValue.splice(requestedLabels.indexOf(requestedLabels[i]), 1);
-            requestedLabels.splice(
-              requestedLabels.indexOf(requestedLabels[i]),
-              1
-            );
-          }
-        }
-        for (i = 0; i < requestedLabels.length; i++) {
-          labelsAndAsValObjs.push({
-            date: requestedLabels[i],
-
-            value: assetValue[i]
-          });
-          console.log(requestedLabels[i]);
-        }
-        assetValue = [];
-        requestedLabels = [];
-        for (i = 0; i < labelsAndAsValObjs.length; i++) {
-          const index = neededLabels.findIndex(
-            e =>
-              moment(e.date).format("MM-DD-YYYY") ===
-              moment(labelsAndAsValObjs[i].date).format("MM-DD-YYYY")
-          );
-          if (index > -1) {
-            neededLabels[index] = labelsAndAsValObjs[i];
-          }
-        }
-
-        console.log(neededLabels);
-
-        for (i = 0; i < neededLabels.length; i++) {
-          requestedLabels.push(
-            moment(neededLabels[i].date).format("MM-DD-YYYY")
-          );
-          assetValue.push(neededLabels[i].value);
-        }
-      }
-      //If desiredDate is 0 that means the user requested ALL available data
-      else {
-        let endDate = response.data[response.data.length - 1].purchaseDate;
-        let startDate = response.data[0].purchaseDate;
-
-        getHistoricalSpotPrices(startDate, endDate).then(data => {
-          let historicalSpotPrice = data;
-        });
-
-        for (var i = 0; i < response.data.length; i++) {
-          labelsAndAsValObjs.push({
-            date: response.data[i].purchaseDate,
-            value: response.data[i].assetValue / 100
-          });
-
-          assetCost = assetCost + response.data[i].purchasePrice;
-          ouncesIn.push(response.data[i].ouncesIn);
-        }
-
+      } else {
         labelsAndAsValObjs.sort(sortByDateAsc);
-        for (i = 0; i < labelsAndAsValObjs.length; i++) {
-          requestedLabels.push(
-            moment(labelsAndAsValObjs[i].date)
-              .format("MM-DD-YYYY")
-              .toString()
-          );
-          assetValue.push(labelsAndAsValObjs[i].value);
+        desiredLength = parseInt(
+          (new Date(labelsAndAsValObjs[labelsAndAsValObjs.length - 1].date) -
+            new Date(labelsAndAsValObjs[0].date)) /
+            (1000 * 60 * 60 * 24)
+        );
+        for (let i = 0; i < desiredLength; i++) {
+          neededLabels.push({
+            date: moment(labelsAndAsValObjs[labelsAndAsValObjs.length - 1].date)
+              .subtract(i, "days")
+              .format(),
+            value: 0
+          });
+          console.log(labelsAndAsValObjs[0].date);
         }
-
-        for (i = requestedLabels.length - 1; i >= 0; i -= 1) {
-          let n = requestedLabels.lastIndexOf(requestedLabels[i]);
-
-          if (
-            requestedLabels.indexOf(requestedLabels[i]) !==
-            requestedLabels.lastIndexOf(requestedLabels[i])
-          ) {
-            // We have to put the actual .indexOf function instead of defining a const
-            // because .indexOf returns an array
-            assetValue[requestedLabels.lastIndexOf(requestedLabels[i])] =
-              assetValue[requestedLabels.indexOf(requestedLabels[i])] +
-              assetValue[requestedLabels.lastIndexOf(requestedLabels[i])];
-            assetValue.splice(requestedLabels.indexOf(requestedLabels[i]), 1);
-
-            requestedLabels.splice(
-              requestedLabels.indexOf(requestedLabels[i]),
-              1
-            );
-          }
+        /* Sort labelsAndAsValObjs array of objects by asscending date
+    and then push the respective JSON value to different arrays
+     */
+        neededLabels.sort(sortByDateAsc);
+      }
+      for (let i = 0; i < labelsAndAsValObjs.length; i++) {
+        const index = neededLabels.findIndex(
+          e =>
+            moment(e.date).format("MM-DD-YYYY") ===
+            moment(labelsAndAsValObjs[i].date).format("MM-DD-YYYY")
+        );
+        if (index > -1) {
+          neededLabels[index] = labelsAndAsValObjs[i];
         }
       }
+
+      for (let i = 0; i < neededLabels.length; i++) {
+        requestedLabels.push(moment(neededLabels[i].date).format("MM-DD-YYYY"));
+        assetValue.push(neededLabels[i].value);
+      }
+
+      //If desiredDate is 0 that means the user requested ALL available data
+
       var ctx = document.getElementById("myChart").getContext("2d");
       window.chart = new Chart(ctx, {
         type: "line",

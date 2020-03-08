@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 let Spot = require("../models/spotPrice");
 let apiKey = process.env.alphaKey;
-
+var moment = require("moment");
 const authenticate = require("../authenticate");
 const cors = require("./cors");
 let fetch = require("node-fetch");
@@ -29,56 +29,97 @@ router
   .get(cors.cors, function(req, res, next) {
     Spot.find({
       date: {
+        $gte: new Date(req.query.startDate),
+        $lte: new Date(req.query.endDate)
+      }
+    })
+      .then(assets => {
+        if (
+          assets.length ==
+          parseInt(
+            (new Date(req.query.endDate) - new Date(req.query.startDate)) /
+              (1000 * 60 * 60 * 24)
+          )
+        ) {
+          console.log("all assets found ", assets);
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "application/json");
+          res.json("An Api call WASNT made" + assets);
+        } else {
+          let endDate = moment(req.query.endDate)
+            .format("YYYY-MM-DD")
+            .toString();
+          let startDate = moment(req.query.startDate)
+            .format("YYYY-MM-DD")
+            .toString();
+          let apiUrl =
+            "https://metals-api.com/api/timeseries?access_key=" +
+            process.env.metalsApi +
+            "&start_date=" +
+            startDate +
+            "&end_date=" +
+            endDate +
+            "&symbols=XAG&base=USD";
+
+          fetch(apiUrl)
+            .then(res => res.json())
+            //
+            .then(json => {
+              for (const property in json.rates) {
+                Spot.update(
+                  { date: property },
+                  { $set: { spotPrice: 1 / json.rates[property].XAG } },
+                  { upsert: true },
+                  (err, task) => {
+                    if (err) {
+                      console.log(err);
+                    }
+                  }
+                );
+              }
+              Spot.find({
+                date: {
+                  $gte: new Date(req.query.startDate),
+                  $lte: new Date(req.query.endDate)
+                }
+              }).then(assets => {
+                console.log("assets Created ", assets);
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.json("An Api call WAS made" + assets);
+              });
+            });
+
+          //
+        }
+      })
+
+      .catch(err => next(err));
+  })
+  .post(cors.cors, function(req, res, next) {
+    for (const property in req.body.rates) {
+      Spot.create({
+        date: property,
+        spotPrice: 1 / req.body.rates[property].XAG
+      });
+    }
+    Spot.find({
+      date: {
         $gte: req.params.startDate,
         $lt: req.params.endDate
       }
     })
       .then(
-        spots => {
-          if (spots.length == req.params.endDate - req.params.startDate) {
-            res.statusCode = 200;
-            res.setHeader("Content-Type", "application/json");
-            res.json(spots + true);
-          } else {
-            console.log(process.env.alphaKey);
-            end_date = req.params.endDate;
-            start_date = req.params.startDate;
-            fetch(
-              "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAG&to_currency=USD&apikey=" +
-                process.env.alphaKey,
-              {
-                method: "GET"
-              }
-            )
-              .then(response => response.json())
-
-              .then(response => {
-                Spot.create({
-                  date:
-                    response["Realtime Currency Exchange Rate"][
-                      "6. Last Refreshed"
-                    ],
-                  spotPrice: parseFloat(
-                    response["Realtime Currency Exchange Rate"]["9. Ask Price"]
-                  )
-                }).then(
-                  assets => {
-                    console.log("assets Created ", assets);
-                    res.statusCode = 200;
-                    res.setHeader("Content-Type", "application/json");
-                    res.json(assets);
-                  },
-                  err => next(err)
-                );
-              })
-
-              .catch(err => {
-                console.log(err);
-              });
-          }
+        assets => {
+          let i = Object.keys(req.body.rates);
+          console.log("assets Created ", assets);
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "application/json");
+          res.json(req.body.rates[i]);
         },
         err => next(err)
       )
+
       .catch(err => next(err));
   });
 

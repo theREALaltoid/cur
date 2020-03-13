@@ -38,6 +38,7 @@ router
       }
     })
       .then(assets => {
+        console.log(assets);
         if (
           assets.length ==
           parseInt(
@@ -49,22 +50,49 @@ router
           res.setHeader("Content-Type", "application/json");
           res.json(assets);
         } else {
-          console.log(
-            parseInt(
-              (new Date(req.query.endDate) - new Date(req.query.startDate)) /
-                (1000 * 60 * 60 * 24)
-            )
-          );
-          console.log("all no found ");
-          res.statusCode = 200;
-          res.setHeader("Content-Type", "application/json");
-          res.json(assets);
+          for (const property in req.query.rates) {
+            console.log(req.query.rates);
+            Spot.update(
+              { date: property },
+              { $set: { spotPrice: 1 / json.rates[property].XAG } },
+              { upsert: true },
+              (err, task) => {
+                if (err) {
+                  console.log(err);
+                }
+              }
+            );
+          }
+          Spot.find({
+            date: {
+              $gte: new Date(req.query.startDate),
+              $lte: new Date(req.query.endDate)
+            }
+          }).then(assets => {
+            console.log("assets Created ", assets);
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.json(assets);
+          });
         }
       })
 
       .catch(err => next(err));
   })
   .post(cors.cors, function(req, res, next) {
+    for (const property in req.body.rates) {
+      console.log(property);
+      Spot.update(
+        { date: moment(property).format() },
+        { $set: { spotPrice: 1 / req.body.rates[property].XAG } },
+        { upsert: true },
+        (err, task) => {
+          if (err) {
+            console.log(err);
+          }
+        }
+      );
+    }
     Spot.find({
       date: {
         $gte: req.query.startDate,

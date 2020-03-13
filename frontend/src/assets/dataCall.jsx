@@ -3,26 +3,56 @@ import moment from "moment";
 import annotation from "chartjs-plugin-annotation";
 import Chart from "chart.js";
 import getHistoricalSpotPrices from "./getHistoricalSpotPrice";
+const axios = require("axios");
 
 let accessString = localStorage.getItem("JWT");
 let apiBaseUrl = "http://localhost:3000/";
-const axios = require("axios");
 export default function(desiredLength, spotPrice, historicalSpotPrice) {
   if (window.chart && window.chart !== null) {
     window.chart.destroy();
   }
-  axios
-    .get(apiBaseUrl + "asset", {
-      headers: { Authorization: "Bearer " + accessString },
-      validateStatus: function(status) {
-        if (status == 500) {
-          alert("Server Side Error. Please Contact Support");
-        }
-        return status < 500; // Reject only if the status code is greater than or equal to 500
-      }
-    })
+  let desiredDate = moment()
+    .subtract(desiredLength, "days")
+    .format();
 
-    .then(function(response) {
+  function getAssetData(accessString, apiBaseUrl) {
+    return axios
+      .get(apiBaseUrl + "asset", {
+        headers: { Authorization: "Bearer " + accessString },
+        validateStatus: function(status) {
+          if (status == 500) {
+            alert("Server Side Error. Please Contact Support");
+          }
+          return status < 500; // Reject only if the status code is greater than or equal to 500
+        }
+      })
+      .then(function(response) {
+        return response.data;
+      });
+  }
+  function getHistoricalSpotPrices(endDate, startDate) {
+    return axios.get(
+      "http://localhost:3000/api",
+
+      {
+        headers: { Authorization: "Bearer " + accessString },
+        params: {
+          startDate: startDate,
+          endDate: endDate
+        },
+        validateStatus: function(status) {
+          if (status == 500) {
+            console.log(startDate);
+            alert(startDate);
+          }
+          return status < 500; // Reject only if the status code is greater than or equal to 500
+        }
+      }
+    );
+  }
+  getAssetData(accessString, apiBaseUrl)
+    .then(response => {
+      console.log(response);
       let assetCost = 0;
 
       let ouncesIn = [];
@@ -52,20 +82,20 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
       /*If the desiredLength is a number greater than -1 that means the user selected
         a timeframe and not all their data. Therefore we need to have a condition on the
         dates selected*/
-      for (let i = 0; i < response.data.length; i++) {
-        if (desiredDate <= response.data[i].purchaseDate && desiredLength > 0) {
-          assetCost = assetCost + response.data[i].purchasePrice;
-          ouncesIn.push(response.data[i].ouncesIn);
+      for (let i = 0; i < response.length; i++) {
+        if (desiredDate <= response[i].purchaseDate && desiredLength > 0) {
+          assetCost = assetCost + response[i].purchasePrice;
+          ouncesIn.push(response[i].ouncesIn);
           labelsAndAsValObjs.push({
-            date: response.data[i].purchaseDate,
-            value: response.data[i].assetValue / 100
+            date: response[i].purchaseDate,
+            value: response[i].ouncesIn
           });
         } else if (desiredLength < 0) {
-          assetCost = assetCost + response.data[i].purchasePrice;
-          ouncesIn.push(response.data[i].ouncesIn);
+          assetCost = assetCost + response[i].purchasePrice;
+          ouncesIn.push(response[i].ouncesIn);
           labelsAndAsValObjs.push({
-            date: response.data[i].purchaseDate,
-            value: response.data[i].assetValue / 100
+            date: response[i].purchaseDate,
+            value: response[i].ouncesIn
           });
         }
       }
@@ -152,68 +182,78 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         requestedLabels.push(moment(neededLabels[i].date).format("MM-DD-YYYY"));
         assetValue.push(neededLabels[i].value);
       }
+      let endDate = requestedLabels[0];
+      let startDate = requestedLabels[requestedLabels.length - 1];
+      getHistoricalSpotPrices(startDate, endDate).then(res => {
+        for (var i = 0; i < res.data.length; i++) {
+          console.log(assetValue[i]);
+          assetValue[i] = assetValue[i] * res.data[i].spotPrice;
+          assetValue[i] = assetValue[i].toFixed(2);
+          console.log(res.data[i].spotPrice);
+        }
 
-      //If desiredDate is 0 that means the user requested ALL available data
+        //If desiredDate is 0 that means the user requested ALL available data
 
-      var ctx = document.getElementById("myChart").getContext("2d");
-      window.chart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: requestedLabels,
-          datasets: [
-            {
-              label: "Asset Value",
-              data: assetValue,
-              backgroundColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(255, 206, 86, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(255, 159, 64, 0.2)"
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 1)",
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 206, 86, 1)",
-                "rgba(75, 192, 192, 1)",
-                "rgba(153, 102, 255, 1)",
-                "rgba(255, 159, 64, 1)"
-              ],
-              borderWidth: 1
-            }
-          ]
-        },
-        options: {
-          scales: {
-            yAxes: [
+        var ctx = document.getElementById("myChart").getContext("2d");
+        window.chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: requestedLabels,
+            datasets: [
               {
-                ticks: {
-                  beginAtZero: true
-                }
-              }
-            ]
-          },
-          annotation: {
-            annotations: [
-              {
-                type: "line",
-                mode: "horizontal",
-                scaleID: "y-axis-0",
-                value: assetCost,
-                borderColor: "rgb(75, 192, 192)",
+                label: "Asset Value",
+                data: assetValue,
+                backgroundColor: [
+                  "rgba(255, 99, 132, 0.2)",
+                  "rgba(54, 162, 235, 0.2)",
+                  "rgba(255, 206, 86, 0.2)",
+                  "rgba(75, 192, 192, 0.2)",
+                  "rgba(153, 102, 255, 0.2)",
+                  "rgba(255, 159, 64, 0.2)"
+                ],
+                borderColor: [
+                  "rgba(255, 99, 132, 1)",
+                  "rgba(54, 162, 235, 1)",
+                  "rgba(255, 206, 86, 1)",
+                  "rgba(75, 192, 192, 1)",
+                  "rgba(153, 102, 255, 1)",
+                  "rgba(255, 159, 64, 1)"
+                ],
                 borderWidth: 1
               }
             ]
+          },
+          options: {
+            scales: {
+              yAxes: [
+                {
+                  ticks: {
+                    beginAtZero: true
+                  }
+                }
+              ]
+            },
+            annotation: {
+              annotations: [
+                {
+                  type: "line",
+                  mode: "horizontal",
+                  scaleID: "y-axis-0",
+                  value: assetCost,
+                  borderColor: "rgb(75, 192, 192)",
+                  borderWidth: 1
+                }
+              ]
+            }
           }
-        }
+        });
+        assetCost = 0;
+        ouncesIn = [];
+        assetValue = [];
+        neededLabels = [];
+        requestedLabels = [];
+        labelsAndAsValObjs = [];
       });
-      assetCost = 0;
-      ouncesIn = [];
-      assetValue = [];
-      neededLabels = [];
-      requestedLabels = [];
-      labelsAndAsValObjs = [];
     })
 
     .catch(function(error) {

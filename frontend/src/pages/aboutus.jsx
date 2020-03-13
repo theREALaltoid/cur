@@ -22,7 +22,7 @@ import Chart from "chart.js";
 import "../css/aboutUs.min.css";
 import aboutusTwo from "../img/aboutustwo.jpg";
 import aboutUs from "../img/aboutUs.jpg";
-import Modal from "../assets/model";
+import Example from "../assets/model";
 const axios = require("axios");
 import ReactDOM from "react-dom";
 import dataCall from "../assets/dataCall";
@@ -33,6 +33,7 @@ import apiKey from "../assets/apikey.jsx";
 let apiUrl =
   "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAG&to_currency=USD&apikey=";
 import getSpotPrice from "../assets/priceCall";
+
 class Products extends React.Component {
   constructor(props) {
     super(props);
@@ -40,11 +41,27 @@ class Products extends React.Component {
       labels: {},
       assetCosts: {},
       labelsAndAsValObjs: {},
+      purchaseDate: "",
+      asset: "silver",
       spotPrice: 0,
+      desiredDate: -1,
+      sellPrice: 0,
+      purchasePrice: 0,
       ouncesIn: 0,
       assetValue: 0,
       show: false
     };
+    this.handleInputChange = this.handleInputChange.bind(this);
+  }
+  handleInputChange(event) {
+    const target = event.target;
+    const value = target.name === "isGoing" ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+    console.log(this.state);
   }
 
   componentDidMount() {
@@ -83,30 +100,13 @@ class Products extends React.Component {
         ouncesIn: ouncesIn
       });
     });
+    this.handleInputChange(event);
   }
   showModal = event => {
     this.setState({
       show: !this.state.show
     });
   };
-  createEntry(event) {
-    axios
-      .post("/http://localhost:3000/asset", {
-        asset: this.state.asset,
-        purchaseDate: this.state.purchaseDate,
-        sellDate: this.state.purchaseDate,
-        purchasePrice: this.state.purchaseDate,
-        sellPrice: this.state.sellPrice,
-        ouncesIn: this.state.ouncesIn,
-        assetValue: this.state.assetValue
-      })
-      .then(function(response) {
-        console.log(response);
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
-  }
 
   render() {
     const assetData = this.state.labelsAndAsValObjs;
@@ -138,6 +138,7 @@ class Products extends React.Component {
     ];
     const selectorButtons = desiredNumberString.map(desired => (
       <Button
+        name="desiredDate"
         onClick={event =>
           this.handleClick(event, desired.number, this.state.spotPrice)
         }
@@ -160,11 +161,10 @@ class Products extends React.Component {
               <h1>It is worth ${assetValue.toFixed(2)}</h1>
             </Col>
             <Col className="centerCol" md="3">
-              {" "}
               {assetTags}
             </Col>
             <Col md="1">
-              <Modal value="Create Entry" />
+              <Example />
             </Col>
           </Row>
 

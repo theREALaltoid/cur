@@ -26,7 +26,7 @@ router
   .route("/")
 
   //Returns Assets For specified User
-  .get(cors.cors, function(req, res, next) {
+  .get(cors.cors, authenticate.verifyUser, function(req, res, next) {
     let startDate = moment(req.query.startDate)
       .subtract(2, "days")
       .format()
@@ -79,7 +79,7 @@ router
 
       .catch(err => next(err));
   })
-  .post(cors.cors, function(req, res, next) {
+  .post(cors.cors, authenticate.verifyUser, function(req, res, next) {
     for (const property in req.body.rates) {
       console.log(property);
       Spot.update(

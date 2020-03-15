@@ -1,30 +1,55 @@
 const axios = require("axios");
-const accessString = localStorage.getItem("JWT");
-
+let accessString = localStorage.getItem("JWT");
+let apiBaseUrl = "http://localhost:3000/";
 export const MODAL_CLICKED = "MODAL_CLICKED";
 export const clickedAction = { type: "MODAL_CLICKED" };
 
-export const FetchData = "FetchData";
-export const ERROR = "ERROR";
+export const DROPDOWN_CLICKED = "DROPDOWN_CLICKED";
+export const dropdownClickedAction = { type: "DROPDOWN_CLICKED" };
 
-export const fetchData = () => {
+export const getData = dispatch => {
   return dispatch => {
     axios({
-      method: "post",
+      method: "get",
       headers: { Authorization: "Bearer " + accessString },
 
-      url: "http://localhost:3000/asset",
-      data: {
-        asset: "silver",
-        purchaseDate: "2019-01-06T08:00:00.000Z",
-        sellDate: "2019-01-03T08:00:00.000Z",
-        purchasePrice: 5,
-        sellPrice: 5,
-        ouncesIn: 1,
-        assetValue: 1400
+      url: apiBaseUrl + "asset"
+    }).then(json => {
+      let ouncesIn = 0;
+      for (var i = 0; i < json.length; i++) {
+        if (json[i].ouncesIn) {
+          ouncesIn = ouncesIn + json[i].ouncesIn;
+        }
       }
-    })
-      .then(response => dispatch({ type: "FetchData", data: response }))
-      .catch(error => dispatch({ type: "ERROR", msg: error }));
+      dispatch(receivePosts(json, ouncesIn));
+    });
   };
+};
+export const actionTypes = {
+  FETCH_REQUEST: "FETCH_ REQUEST",
+  FETCH_FAILED: "FETCH_FAILED",
+  FETCH_SUCCESS: "FETCH_SUCCESS"
+};
+const action = (type, payload) => ({ type, payload });
+export const actions = {
+  fetchData: (payload = {}) => {
+    return dispatch => {
+      dispatch(action(actionTypes.FETCH_REQUEST, payload));
+      return axios({
+        method: "get",
+        headers: { Authorization: "Bearer " + accessString },
+
+        url: apiBaseUrl + "asset"
+      }).then(json => {
+        let ouncesIn = 0;
+        for (var i = 0; i < json.data.length; i++) {
+          if (json.data[i].ouncesIn) {
+            ouncesIn = ouncesIn + json.data[i].ouncesIn;
+          }
+        }
+        let data = json.data;
+        dispatch(action(actionTypes.FETCH_SUCCESS, { data, ouncesIn }));
+      });
+    };
+  }
 };

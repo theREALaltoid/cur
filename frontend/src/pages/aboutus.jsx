@@ -33,18 +33,30 @@ import apiKey from "../assets/apikey.jsx";
 let apiUrl =
   "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAG&to_currency=USD&apikey=";
 import getSpotPrice from "../assets/priceCall";
-
+import { useSelector, useDispatch } from "react-redux";
+import { connect } from "react-redux";
+import {
+  clickedAction,
+  dropdownClickedAction,
+  actions
+} from "../redux/actions/index";
+let sortByDateDesc = function(a, b) {
+  if (a.purchaseDate > b.purchaseDate) return -1;
+  if (a.purchaseDate < b.purchaseDate) return 1;
+  return 0;
+};
 class Products extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       labels: {},
       assetCosts: {},
-      labelsAndAsValObjs: {},
+      labelsAndAsValObjs: [],
       purchaseDate: "",
       asset: "silver",
       spotPrice: 0,
       desiredDate: -1,
+      desiredLength: -1,
       sellPrice: 0,
       purchasePrice: 0,
       ouncesIn: 0,
@@ -65,18 +77,8 @@ class Products extends React.Component {
   }
 
   componentDidMount() {
-    getOuncesCall().then(data => {
-      let ouncesIn = 0;
-      for (var i = 0; i < data.length; i++) {
-        if (data[i].ouncesIn) {
-          ouncesIn = ouncesIn + data[i].ouncesIn;
-        }
-      }
-      this.setState({
-        labelsAndAsValObjs: data,
-        ouncesIn: ouncesIn
-      });
-    });
+    this.props.fetchData();
+
     getSpotPrice(apiUrl, apiKey).then(data => {
       this.setState({
         spotPrice: data
@@ -88,18 +90,8 @@ class Products extends React.Component {
 
   handleClick(event, desiredLength, spotPrice) {
     dataCall(desiredLength, spotPrice);
-    getOuncesCall().then(data => {
-      let ouncesIn = 0;
-      for (var i = 0; i < data.length; i++) {
-        if (data[i].ouncesIn) {
-          ouncesIn = ouncesIn + data[i].ouncesIn;
-        }
-      }
-      this.setState({
-        labelsAndAsValObjs: data,
-        ouncesIn: ouncesIn
-      });
-    });
+    this.props.fetchData();
+
     this.handleInputChange(event);
   }
   showModal = event => {
@@ -109,15 +101,16 @@ class Products extends React.Component {
   };
 
   render() {
-    const assetData = this.state.labelsAndAsValObjs;
-    console.log(assetData);
+    let assetData = this.props.fetch.data;
+    assetData.sort(sortByDateDesc);
+
     let assetTags = <div></div>;
     if (assetData.length > 0) {
       assetTags = assetData.map(asset => (
         <div>
           <Card>
             <CardBody>
-              <CardTitle>Purchase Date:{asset.date}</CardTitle>
+              <CardTitle>Purchase Date:{asset.purchaseDate}</CardTitle>
               <CardSubtitle>Ounces In: {asset.ouncesIn}</CardSubtitle>
               <CardText>{asset.description}</CardText>
             </CardBody>
@@ -164,7 +157,7 @@ class Products extends React.Component {
               {assetTags}
             </Col>
             <Col md="1">
-              <Example />
+              <Example {...this.state} />
             </Col>
           </Row>
 
@@ -174,5 +167,21 @@ class Products extends React.Component {
     );
   }
 }
-
-export default Products;
+const MapStateToProps = state => {
+  return {
+    modal: state.modal,
+    asset: state.asset,
+    fetch: state.dataFetch
+  };
+};
+const MapDispatchToProps = dispatch => {
+  return {
+    clickedAction: () => dispatch(clickedAction),
+    dropdownClickedAction: () => dispatch(dropdownClickedAction),
+    fetchData: () => dispatch(actions.fetchData())
+  };
+};
+export default connect(
+  MapStateToProps,
+  MapDispatchToProps
+)(Products);

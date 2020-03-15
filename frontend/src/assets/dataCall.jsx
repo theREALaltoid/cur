@@ -153,14 +153,20 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
             new Date(labelsAndAsValObjs[0].date)) /
             (1000 * 60 * 60 * 24)
         );
+        neededLabels.push({
+          date: moment(
+            labelsAndAsValObjs[labelsAndAsValObjs.length - 1].date
+          ).format(),
+          value: 0
+        });
         for (let i = 0; i < desiredLength; i++) {
           neededLabels.push({
-            date: moment(labelsAndAsValObjs[labelsAndAsValObjs.length - 1].date)
-              .subtract(i, "days")
+            date: moment(labelsAndAsValObjs[0].date)
+              .add(i, "days")
               .format(),
             value: 0
           });
-          console.log(labelsAndAsValObjs[0].date);
+          console.log(i);
         }
         /* Sort labelsAndAsValObjs array of objects by asscending date
     and then push the respective JSON value to different arrays
@@ -186,10 +192,8 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
       let startDate = requestedLabels[requestedLabels.length - 1];
       getHistoricalSpotPrices(startDate, endDate).then(res => {
         for (var i = 0; i < res.data.length; i++) {
-          console.log(assetValue[i]);
           assetValue[i] = assetValue[i] * res.data[i].spotPrice;
           assetValue[i] = assetValue[i].toFixed(2);
-          console.log(res.data[i].spotPrice);
         }
 
         //If desiredDate is 0 that means the user requested ALL available data

@@ -1,9 +1,10 @@
-import { modalReducer, todosReducer } from "./modal";
+import { modalReducer, dataFetch, dropdownClickedReducer } from "./modal";
 import { combineReducers } from "redux";
 
 const allReducers = combineReducers({
   modal: modalReducer,
-  addTodo: todosReducer
+  dataFetch: dataFetch,
+  dropdown: dropdownClickedReducer
 });
 
 export default allReducers;

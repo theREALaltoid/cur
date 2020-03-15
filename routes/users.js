@@ -53,9 +53,9 @@ userRouter.post("/signup", cors.cors, (req, res, next) => {
             user.save((err, user) => {
               if (err) {
                 res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
 
                 res.json({ user: "exists" });
-                return;
               }
               passport.authenticate("local")(req, res, () => {
                 res.statusCode = 200;

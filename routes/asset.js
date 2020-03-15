@@ -16,7 +16,7 @@ router
   .route("/")
 
   //Returns Assets For specified User
-  .get(cors.cors, function(req, res, next) {
+  .get(cors.cors, authenticate.verifyUser, function(req, res, next) {
     Asset.find({})
       .then(
         assets => {
@@ -29,7 +29,7 @@ router
       .catch(err => next(err));
   })
   //Creates asset object for user
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(cors.cors, authenticate.verifyUser, (req, res, next) => {
     req.body.postedBy = req.user._id;
     Asset.create(req.body)
       .then(

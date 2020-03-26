@@ -1,13 +1,20 @@
 import React from "react";
-import Navigation from "../components/navbar";
 import Routes from "../routes/routes";
+import { withRouter } from "react-router-dom";
+import { connect } from "react-redux";
 import PageFooter from "../components/footer";
-const App = () => (
-  <div>
-    <Navigation />
-    <Routes />
-    <PageFooter />
-  </div>
-);
 
-export default App;
+const App = props => {
+  return (
+    <div className={!props.dark ? "App" : "night"}>
+      <Routes />
+      <PageFooter />
+    </div>
+  );
+};
+const mapStateToProps = state => {
+  return {
+    dark: state.dark
+  };
+};
+export default withRouter(connect(mapStateToProps)(App));

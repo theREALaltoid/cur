@@ -10,21 +10,21 @@ import {
   NavbarBrand
 } from "reactstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCarrot } from "@fortawesome/free-solid-svg-icons";
+import { faMoon, faCoins, faSun } from "@fortawesome/free-solid-svg-icons";
 import "../css/navbar.min.css";
+import { connect } from "react-redux";
+import { changeDarkModeState } from "../redux/actions/index";
 
 const Navigation = props => {
   const [isOpen, setIsOpen] = useState(false);
-
   const toggle = () => setIsOpen(!isOpen);
+
   return (
     <Navbar expand="sm">
       <NavbarToggler className="navbar-dark" onClick={toggle} />
       <NavbarBrand>
-        {" "}
         <Link to="/">
-          {" "}
-          <FontAwesomeIcon icon={faCarrot} size="2x" />
+          <FontAwesomeIcon icon={faCoins} size="2x" />
         </Link>
       </NavbarBrand>
       <div className="col-md-six mx-auto">
@@ -35,11 +35,11 @@ const Navigation = props => {
                 Sign In/Sign Up
               </NavLink>
             </NavItem>
-            <NavItem></NavItem>
+
             <NavItem>
-              <NavLink tag={Link} to="/aboutus">
-                About
-              </NavLink>
+              <div onClick={props.changeDarkModeState}>
+                <FontAwesomeIcon icon={props.dark ? faMoon : faSun} size="1x" />
+              </div>
             </NavItem>
           </Nav>
         </Collapse>
@@ -47,5 +47,17 @@ const Navigation = props => {
     </Navbar>
   );
 };
-
-export default Navigation;
+const MapStateToProps = state => {
+  return {
+    dark: state.dark
+  };
+};
+const MapDispatchToProps = dispatch => {
+  return {
+    changeDarkModeState: () => dispatch(changeDarkModeState)
+  };
+};
+export default connect(
+  MapStateToProps,
+  MapDispatchToProps
+)(Navigation);

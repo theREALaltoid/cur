@@ -1,70 +1,69 @@
-import React from "react";
 import moment from "moment";
 import annotation from "chartjs-plugin-annotation";
 import Chart from "chart.js";
-import getHistoricalSpotPrices from "./getHistoricalSpotPrice";
+import { apiBaseUrl } from "../assets/urlAssets";
+
 const axios = require("axios");
 
-let accessString = localStorage.getItem("JWT");
-let apiBaseUrl = "http://localhost:3000/";
-export default function(desiredLength, spotPrice, historicalSpotPrice) {
+export default function(desiredLength, spotPrice, apiBaseUrl) {
   if (window.chart && window.chart !== null) {
     window.chart.destroy();
   }
-  let desiredDate = moment()
-    .subtract(desiredLength, "days")
-    .format();
 
-  function getAssetData(accessString, apiBaseUrl) {
+  //This pulls user asset data from our api
+
+  function getAssetData(apiBaseUrl) {
     return axios
-      .get(apiBaseUrl + "asset", {
-        headers: { Authorization: "Bearer " + accessString },
-        validateStatus: function(status) {
-          if (status == 500) {
-            alert("Server Side Error. Please Contact Support");
+      .get(
+        apiBaseUrl + "/asset",
+        { withCredentials: true },
+        {
+          validateStatus: function(status) {
+            if (status === 500) {
+              alert("Server Side Error. Please Contact Support");
+            }
+            return status < 500; // Reject only if the status code is greater than or equal to 500
           }
-          return status < 500; // Reject only if the status code is greater than or equal to 500
         }
-      })
+      )
       .then(function(response) {
         return response.data;
       });
   }
-  function getHistoricalSpotPrices(endDate, startDate) {
-    return axios.get(
-      "http://localhost:3000/api",
+  //This pulls historical spot price data from our api
 
-      {
-        headers: { Authorization: "Bearer " + accessString },
-        params: {
-          startDate: startDate,
-          endDate: endDate
-        },
-        validateStatus: function(status) {
-          if (status == 500) {
-            console.log(startDate);
-            alert(startDate);
+  function getHistoricalSpotPrices(endDate, startDate, apiBaseUrl) {
+    return axios
+      .get(
+        apiBaseUrl + "/api",
+
+        {
+          withCredentials: true,
+          params: {
+            startDate: startDate,
+            endDate: endDate
+          },
+          validateStatus: function(status) {
+            return status < 500; // Reject only if the status code is greater than or equal to 500
           }
-          return status < 500; // Reject only if the status code is greater than or equal to 500
         }
-      }
-    );
+      )
+      .then(console.log(startDate));
   }
-  getAssetData(accessString, apiBaseUrl)
+  getAssetData(apiBaseUrl)
     .then(response => {
-      console.log(response);
       let assetCost = 0;
-
       let ouncesIn = [];
       let assetValue = [];
       let neededLabels = [];
       let requestedLabels = [];
-      let labelsAndAsValObjs = [];
+      let userData = [];
       // Here is where we will calculate the value of the user's assets and then send that to assetWatcher Template
       spotPrice = parseFloat(spotPrice);
       let desiredDate = moment()
         .subtract(desiredLength, "days")
         .format();
+
       let sortByDateAsc = function(a, b) {
         if (a.date > b.date) return 1;
         if (a.date < b.date) return -1;
@@ -74,7 +73,8 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         this.splice(index, 0, item);
       };
       /*Needed labels is an array of JSON objects where value
-      equals 0 and date equals a needed date requested  */
+      equals 0 and date equals a needed date requested. It acts as a template that
+      can be combined with userData */
 
       /*Here we push ounces in, how much assets cost,
         and a JSON object where date = the date purchased and
@@ -83,30 +83,25 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         a timeframe and not all their data. Therefore we need to have a condition on the
         dates selected*/
       for (let i = 0; i < response.length; i++) {
-        if (desiredDate <= response[i].purchaseDate && desiredLength > 0) {
+        if (
+          (desiredDate <= response[i].purchaseDate && desiredLength > 0) ||
+          desiredLength < 0
+        ) {
           assetCost = assetCost + response[i].purchasePrice;
           ouncesIn.push(response[i].ouncesIn);
-          labelsAndAsValObjs.push({
-            date: response[i].purchaseDate,
-            value: response[i].ouncesIn
-          });
-        } else if (desiredLength < 0) {
-          assetCost = assetCost + response[i].purchasePrice;
-          ouncesIn.push(response[i].ouncesIn);
-          labelsAndAsValObjs.push({
+          userData.push({
             date: response[i].purchaseDate,
             value: response[i].ouncesIn
           });
         }
       }
 
-      for (let i = 0; i < labelsAndAsValObjs.length; i++) {
-        requestedLabels.push(labelsAndAsValObjs[i].date);
-        assetValue.push(labelsAndAsValObjs[i].value);
+      for (let i = 0; i < userData.length; i++) {
+        requestedLabels.push(userData[i].date);
+        assetValue.push(userData[i].value);
       }
-      labelsAndAsValObjs = [];
+      userData = [];
       for (let i = requestedLabels.length - 1; i >= 0; i -= 1) {
-        let n = requestedLabels.lastIndexOf(requestedLabels[i]);
         if (
           requestedLabels.indexOf(requestedLabels[i]) !==
           requestedLabels.lastIndexOf(requestedLabels[i])
@@ -125,13 +120,14 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
       }
 
       for (let i = 0; i < requestedLabels.length; i++) {
-        labelsAndAsValObjs.push({
+        userData.push({
           date: requestedLabels[i],
           value: assetValue[i]
         });
       }
       assetValue = [];
       requestedLabels = [];
+      console.log(apiBaseUrl);
 
       if (desiredLength > 0) {
         for (let i = 0; i < desiredLength; i++) {
@@ -142,45 +138,42 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
             value: 0
           });
         }
-        /* Sort labelsAndAsValObjs array of objects by asscending date
+        /* Sort userData array of objects by asscending date
           and then push the respective JSON value to different arrays
            */
         neededLabels.sort(sortByDateAsc);
       } else {
-        labelsAndAsValObjs.sort(sortByDateAsc);
+        userData.sort(sortByDateAsc);
         desiredLength = parseInt(
-          (new Date(labelsAndAsValObjs[labelsAndAsValObjs.length - 1].date) -
-            new Date(labelsAndAsValObjs[0].date)) /
+          (new Date(userData[userData.length - 1].date) -
+            new Date(userData[0].date)) /
             (1000 * 60 * 60 * 24)
         );
         neededLabels.push({
-          date: moment(
-            labelsAndAsValObjs[labelsAndAsValObjs.length - 1].date
-          ).format(),
+          date: moment(userData[userData.length - 1].date).format(),
           value: 0
         });
         for (let i = 0; i < desiredLength; i++) {
           neededLabels.push({
-            date: moment(labelsAndAsValObjs[0].date)
+            date: moment(userData[0].date)
               .add(i, "days")
               .format(),
             value: 0
           });
-          console.log(i);
         }
-        /* Sort labelsAndAsValObjs array of objects by asscending date
+        /* Sort userData array of objects by asscending date
     and then push the respective JSON value to different arrays
      */
         neededLabels.sort(sortByDateAsc);
       }
-      for (let i = 0; i < labelsAndAsValObjs.length; i++) {
+      for (let i = 0; i < userData.length; i++) {
         const index = neededLabels.findIndex(
           e =>
             moment(e.date).format("MM-DD-YYYY") ===
-            moment(labelsAndAsValObjs[i].date).format("MM-DD-YYYY")
+            moment(userData[i].date).format("MM-DD-YYYY")
         );
         if (index > -1) {
-          neededLabels[index] = labelsAndAsValObjs[i];
+          neededLabels[index] = userData[i];
         }
       }
 
@@ -188,15 +181,22 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         requestedLabels.push(moment(neededLabels[i].date).format("MM-DD-YYYY"));
         assetValue.push(neededLabels[i].value);
       }
-      let endDate = requestedLabels[0];
-      let startDate = requestedLabels[requestedLabels.length - 1];
-      getHistoricalSpotPrices(startDate, endDate).then(res => {
+      let endDate = neededLabels[0].date;
+      let startDate = neededLabels[requestedLabels.length - 1].date;
+
+      //After user Data is processed(duplicates removed and dates are sorted) we then calculate
+      //The value of those assets
+
+      getHistoricalSpotPrices(startDate, endDate, apiBaseUrl).then(res => {
+        let totalValueOfAssets = 0;
         for (var i = 0; i < res.data.length; i++) {
+          console.log("asset" + totalValueOfAssets);
+          console.log(i);
+          totalValueOfAssets = totalValueOfAssets + assetValue[i];
+          assetValue[i] = assetValue[i] + totalValueOfAssets;
           assetValue[i] = assetValue[i] * res.data[i].spotPrice;
           assetValue[i] = assetValue[i].toFixed(2);
         }
-
-        //If desiredDate is 0 that means the user requested ALL available data
 
         var ctx = document.getElementById("myChart").getContext("2d");
         window.chart = new Chart(ctx, {
@@ -243,7 +243,7 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
                   type: "line",
                   mode: "horizontal",
                   scaleID: "y-axis-0",
-                  value: assetCost,
+                  value: assetCost / 100,
                   borderColor: "rgb(75, 192, 192)",
                   borderWidth: 1
                 }
@@ -256,7 +256,7 @@ export default function(desiredLength, spotPrice, historicalSpotPrice) {
         assetValue = [];
         neededLabels = [];
         requestedLabels = [];
-        labelsAndAsValObjs = [];
+        userData = [];
       });
     })
 

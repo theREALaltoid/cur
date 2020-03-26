@@ -1,30 +1,32 @@
-const axios = require("axios");
-let accessString = localStorage.getItem("JWT");
-let apiBaseUrl = "http://localhost:3000/";
-export const MODAL_CLICKED = "MODAL_CLICKED";
-export const clickedAction = { type: "MODAL_CLICKED" };
+import { apiBaseUrl } from "../../assets/urlAssets";
 
+const axios = require("axios");
+
+export const NEW_ENTRY = "NEW_ENTRY";
+export const OPEN_MODAL = "OPEN_MODAL";
+export const openModal = { type: "OPEN_MODAL" };
+export const UPDATE_CLICKED = "UPDATE_CLICKED";
+export const updateAssetEntry = data => {
+  return {
+    type: "UPDATE_CLICKED",
+    data // it will add key `dataToUpdate` with argument value.
+  };
+};
+export const UPDATE_STATE = "UPDATE_STATE";
+export const updateStateOfModal = (data, field) => {
+  return {
+    type: "UPDATE_STATE",
+    data,
+    field
+  };
+};
+export const inputNewEntry = { type: "NEW_ENTRY" };
+export const changeDarkModeState = {
+  type: "CHANGE_MODE"
+};
 export const DROPDOWN_CLICKED = "DROPDOWN_CLICKED";
 export const dropdownClickedAction = { type: "DROPDOWN_CLICKED" };
 
-export const getData = dispatch => {
-  return dispatch => {
-    axios({
-      method: "get",
-      headers: { Authorization: "Bearer " + accessString },
-
-      url: apiBaseUrl + "asset"
-    }).then(json => {
-      let ouncesIn = 0;
-      for (var i = 0; i < json.length; i++) {
-        if (json[i].ouncesIn) {
-          ouncesIn = ouncesIn + json[i].ouncesIn;
-        }
-      }
-      dispatch(receivePosts(json, ouncesIn));
-    });
-  };
-};
 export const actionTypes = {
   FETCH_REQUEST: "FETCH_ REQUEST",
   FETCH_FAILED: "FETCH_FAILED",
@@ -37,7 +39,7 @@ export const actions = {
       dispatch(action(actionTypes.FETCH_REQUEST, payload));
       return axios({
         method: "get",
-        headers: { Authorization: "Bearer " + accessString },
+        withCredentials: true,
 
         url: apiBaseUrl + "asset"
       }).then(json => {

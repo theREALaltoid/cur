@@ -1,10 +1,12 @@
-import { modalReducer, dataFetch, dropdownClickedReducer } from "./modal";
+import { modalReducer, dataFetch } from "./modal";
+import { darkModeStateReducer } from "./darkModeStateReducer";
 import { combineReducers } from "redux";
 
 const allReducers = combineReducers({
   modal: modalReducer,
-  dataFetch: dataFetch,
-  dropdown: dropdownClickedReducer
+
+  dark: darkModeStateReducer,
+  dataFetch: dataFetch
 });
 
 export default allReducers;

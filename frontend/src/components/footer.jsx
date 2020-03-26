@@ -17,7 +17,7 @@ class PageFooter extends React.PureComponent {
           <Row>
             <Col md="4"></Col>
             <Col md="4">
-              <h1>Plantr</h1>
+              <h1>Currency</h1>
             </Col>
             <Col md="4"></Col>
           </Row>

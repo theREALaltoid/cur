@@ -7,22 +7,36 @@ import App from "./pages/app";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "font-awesome/css/font-awesome.min.css";
 import { applyMiddleware, createStore, compose } from "redux";
+import { persistStore, persistReducer } from "redux-persist";
+import { PersistGate } from "redux-persist/integration/react";
+import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
 import allReducers from "../src/redux/reducers/allReducers";
 import thunk from "redux-thunk";
 const middlewares = [thunk];
+const persistConfig = {
+  key: "root",
+  storage
+};
+
+const persistedReducer = persistReducer(persistConfig, allReducers);
+
 export const store = createStore(
-  allReducers,
+  persistedReducer,
   compose(
     applyMiddleware(...middlewares),
     window.devToolsExtension ? window.devToolsExtension() : f => f
-  ) // our initialState
+  )
+  // our initialState
 );
+let persistor = persistStore(store);
 
 ReactDOM.render(
   <Provider store={store}>
-    <HashRouter>
-      <App />
-    </HashRouter>
+    <PersistGate loading={null} persistor={persistor}>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </PersistGate>
   </Provider>,
   document.getElementById("root")
 );

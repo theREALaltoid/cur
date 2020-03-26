@@ -3,23 +3,15 @@ import { Route, Switch } from "react-router-dom";
 import Home from "../pages/home";
 import signin from "../pages/signin";
 import signup from "../pages/signup";
-import aboutus from "../pages/aboutus";
-///import PrivateRoute from "./privateroute";
-function requireAuth(nextState, replace) {
-  if (!auth.loggedIn()) {
-    replace({
-      pathname: "/login",
-      state: { nextPathname: nextState.location.pathname }
-    });
-  }
-}
+import dashboard from "../pages/dashboard";
+import PrivateRoute from "./privateroute";
 
 const Routes = () => (
   <Switch>
     <Route exact path="/" component={Home} />
     <Route path="/signin" component={signin} />
-    <Route path="/aboutus" component={aboutus} />
     <Route path="/signup" component={signup} />
+    <PrivateRoute path="/dashboard" component={dashboard} />
   </Switch>
 );
 

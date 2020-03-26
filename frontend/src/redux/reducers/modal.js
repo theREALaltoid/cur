@@ -1,28 +1,51 @@
 import {
-  MODAL_CLICKED,
-  POST_ASSET,
-  DROPDOWN_CLICKED,
-  SAVE_DATA,
+  OPEN_MODAL,
+  NEW_ENTRY,
+  UPDATE_CLICKED,
+  UPDATE_STATE,
   actionTypes
 } from "../actions/index";
+import moment from "moment";
 
-export const modalReducer = (state = false, { type }) => {
-  switch (type) {
-    case "MODAL_CLICKED":
-      return !state;
-    default:
-      return state;
-  }
+const initialState = {
+  postToUpdate: "",
+  assetType: "",
+  assetValue: "",
+  assetCost: "",
+  ouncesIn: "",
+  datePurchased: "",
+  update: false,
+  modal: false
 };
-
-const initialDropdown = [{ open: false, selected: "silver" }];
-export const dropdownClickedReducer = (state = initialDropdown, { type }) => {
+export const modalReducer = (state = initialState, { type, data, field }) => {
   switch (type) {
-    case "DROPDOWN_CLICKED":
-      console.log(initialDropdown);
-      return !initialDropdown.open;
+    case UPDATE_CLICKED:
+      return {
+        postToUpdate: data[0].id,
+        assetType: data[1].assetType,
+        assetValue: data[2].assetValue,
+        assetCost: data[3].assetCost,
+        ouncesIn: data[4].totalOunces,
+        datePurchased: moment(data[5].purchaseDate).format("YYYY-MM-DD"),
+        update: true,
+        modal: true
+      };
+    case NEW_ENTRY:
+      return { ...initialState };
+    case OPEN_MODAL:
+      return {
+        assetType: "",
+        assetValue: "",
+        assetCost: "",
+        ouncesIn: "",
+        datePurchased: "",
+        update: false,
+        modal: true
+      };
+    case UPDATE_STATE:
+      return { ...state, [field]: data };
     default:
-      return !state;
+      return { ...initialState };
   }
 };
 
@@ -46,26 +69,6 @@ export const dataFetch = (state = getInitialState(), { type, payload }) => {
         ...payload
       };
 
-    default:
-      return state;
-  }
-};
-
-const fetchReducer = (
-  state = {
-    isFetching: false,
-    didInvalidate: false,
-    ouncesIn: 0,
-    labelsAndAsValObjs: []
-  },
-  { type }
-) => {
-  switch (action.type) {
-    case SAVE_DATA:
-      return {
-        ouncesIn: action.ouncesIn,
-        labelsAndAsValObjs: action.labelsAndAsValObjs
-      };
     default:
       return state;
   }

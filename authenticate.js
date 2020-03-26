@@ -15,9 +15,15 @@ passport.deserializeUser(User.deserializeUser());
 exports.getToken = function(user) {
   return jwt.sign(user, config.secretKey, { expiresIn: 36000 });
 };
-
+var cookieExtractor = function(req) {
+  var token = null;
+  if (req && req.cookies) {
+    token = req.cookies["jwt"];
+  }
+  return token;
+};
 let opts = {};
-opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.jwtFromRequest = cookieExtractor;
 opts.secretOrKey = config.secretKey;
 
 exports.jwtPassport = passport.use(
@@ -54,7 +60,7 @@ exports.verifyPoster = (req, err, next) => {};
 exports.verifyListOwner = (req, err, next) => {
   let id = req.user._id;
 
-  Favorites.findOne({ postedBy: req.user._id }, (err, user) => {
+  Asset.findOne({ postedBy: req.user._id }, (err, user) => {
     if (user) {
       next();
     } else {

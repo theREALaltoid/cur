@@ -1,7 +1,6 @@
 import moment from "moment";
 import dataCall from "../assets/dataCall";
-const accessString = localStorage.getItem("JWT");
-import React, { useState, useReducer } from "react";
+import React, { useState } from "react";
 import {
   Button,
   Modal,
@@ -14,98 +13,120 @@ import {
   Form,
   InputGroup,
   InputGroupAddon,
-  InputGroupText,
   Dropdown,
   DropdownToggle,
   DropdownMenu,
   DropdownItem
 } from "reactstrap";
-const axios = require("axios");
-import { useSelector, useDispatch } from "react-redux";
 import { connect } from "react-redux";
 import {
-  clickedAction,
-  dropdownClickedAction,
-  actions
+  inputNewEntry,
+  openModal,
+  actions,
+  updateStateOfModal
 } from "../redux/actions/index";
+import "../css/modal.min.css";
+import "../css/generalStyle.min.css";
+import {} from "../redux/actions/index";
+import { apiBaseUrl, dailySpotPriceURL } from "../assets/urlAssets";
 
-export const Example = props => {
+const axios = require("axios");
+export const Entrymodal = props => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const [userInput, setUserInput] = useReducer(
-    (state, newState) => ({ ...state, ...newState }),
-    {
-      assetType: "Silver",
-      assetValue: "",
-      assetCost: 0,
-      ouncesIn: 0,
-      datePurchased: ""
-    }
-  );
-  const handleChange = evt => {
-    const name = evt.target.name;
-    const newValue = evt.target.value;
-    setUserInput({ [name]: newValue });
-  };
-
   const toggle = () => setDropdownOpen(prevState => !prevState);
-  const postData = evt => {
-    console.log(moment(userInput.datePurchased).format("MM-DD-YYYY"));
-    axios({
-      method: "post",
-      headers: { Authorization: "Bearer " + accessString },
-      url: "http://localhost:3000/asset",
-      data: {
-        asset: userInput.assetType,
-        purchaseDate: userInput.datePurchased + "T00:00:00",
-        sellDate: "2019-01-03",
-        purchasePrice: userInput.assetCost,
-        sellPrice: 0,
-        ouncesIn: userInput.ouncesIn,
-        assetValue: userInput.assetValue
+
+  const updateAsset = event => {
+    axios(
+      apiBaseUrl + "/asset",
+
+      {
+        method: "put",
+        data: {
+          postToUpdate: props.modal.postToUpdate,
+          asset: props.modal.assetType,
+          purchaseDate: moment(props.modal.datePurchased).format("MM-DD-YYYY"),
+          sellDate: "2019-01-03",
+          purchasePrice: props.modal.assetCost,
+          sellPrice: 0,
+          ouncesIn: props.modal.ouncesIn,
+          assetValue: props.modal.assetValue
+        },
+        withCredentials: true
       }
-    })
-      .then(response => response)
+    )
       .then(response => {
         dataCall(props.desiredLength, props.spotPrice);
         props.fetchData();
       })
+
       .catch(error => console.log(error));
   };
+  const postData = evt => {
+    axios(
+      apiBaseUrl + "/asset",
 
+      {
+        method: "post",
+        data: {
+          asset: props.modal.assetType,
+          purchaseDate: moment(props.modal.datePurchased).format("MM-DD-YYYY"),
+          sellDate: "2019-01-03",
+          purchasePrice: props.modal.assetCost,
+          sellPrice: 0,
+          ouncesIn: props.modal.ouncesIn,
+          assetValue: props.modal.assetValue
+        },
+        withCredentials: true
+      }
+    )
+      .then(response => response)
+      .then(response => {
+        dataCall(props.desiredLength, props.spotPrice);
+        props.fetchData();
+        props.inputNewEntry();
+      })
+      .catch(error => console.log(error));
+  };
+  const handleUpdate = event => {
+    props.updateStateOfModal(event.target.value, event.target.name);
+  };
   return (
     <div>
-      <Button color="danger" onClick={props.clickedAction}>
-        Create Entry
-      </Button>
+      <Button onClick={props.openModal}>Create Entry</Button>
 
-      <Modal isOpen={props.modal} toggle={props.clickedAction}>
-        <ModalHeader toggle={props.clickedAction}>Enter purchased</ModalHeader>
-        <ModalBody>
+      <Modal
+        modalClassName={!props.dark ? "App" : "night"}
+        isOpen={props.modal.modal}
+        toggle={props.inputNewEntry}
+      >
+        <ModalHeader toggle={props.inputNewEntry}>Enter purchased</ModalHeader>
+        <ModalBody className="modalContent">
           <Form>
             <FormGroup>
               <Dropdown isOpen={dropdownOpen} toggle={toggle}>
-                <DropdownToggle caret>
-                  Asset Type: {userInput.assetType}
+                <DropdownToggle className="modalButton" caret>
+                  Asset Type:
+                  {props.modal.assetType}
                 </DropdownToggle>
                 <DropdownMenu>
                   <DropdownItem
                     name="assetType"
-                    onClick={handleChange}
+                    onClick={handleUpdate}
                     value="Silver"
                   >
                     Silver
                   </DropdownItem>
                   <DropdownItem
                     name="assetType"
-                    onClick={handleChange}
+                    onClick={handleUpdate}
                     value="Gold"
                   >
                     Gold
                   </DropdownItem>
                   <DropdownItem
                     name="assetType"
-                    onClick={handleChange}
+                    onClick={handleUpdate}
                     value="Copper"
                   >
                     Copper
@@ -114,72 +135,75 @@ export const Example = props => {
               </Dropdown>
             </FormGroup>
             <FormGroup>
-              <Label for="exampleNumber">Asset Value</Label>
+              <Label for="EntrymodalNumber">Asset Value</Label>
 
               <InputGroup>
                 <InputGroupAddon addonType="prepend">$</InputGroupAddon>
                 <Input
                   type="number"
                   name="assetValue"
-                  id="exampleNumber"
+                  id="EntrymodalNumber"
                   placeholder="required"
-                  onChange={handleChange}
-                  value={userInput.assetValue}
+                  onChange={handleUpdate}
+                  value={props.modal.assetValue}
                 />
               </InputGroup>
             </FormGroup>
             <FormGroup>
-              <Label for="exampleNumber">Asset Cost</Label>
+              <Label for="EntrymodalNumber">Asset Cost</Label>
               <InputGroup>
                 <InputGroupAddon addonType="prepend">$</InputGroupAddon>
 
                 <Input
                   type="number"
                   name="assetCost"
-                  id="exampleNumber"
+                  id="EntrymodalNumber"
                   placeholder="required"
-                  onChange={handleChange}
-                  value={userInput.assetCost}
+                  onChange={handleUpdate}
+                  value={props.modal.assetCost}
                   required
                 />
               </InputGroup>
             </FormGroup>
             <FormGroup>
-              <Label for="exampleNumber">Total Ounces</Label>
+              <Label for="entryModalOunces">Total Ounces</Label>
               <InputGroup>
                 <InputGroupAddon addonType="prepend"></InputGroupAddon>
 
                 <Input
                   type="number"
                   name="ouncesIn"
-                  id="exampleNumber"
+                  id="entryModalOunces"
                   placeholder="required"
-                  onChange={handleChange}
-                  value={userInput.ouncesIn}
+                  onChange={handleUpdate}
+                  value={props.modal.ouncesIn}
                   required
                 />
               </InputGroup>
             </FormGroup>
             <FormGroup>
-              <Label for="exampleDate">Date Purchased</Label>
+              <Label for="EntrymodalDate">Date Purchased</Label>
 
               <Input
                 type="date"
                 name="datePurchased"
-                id="exampleDate"
+                id="EntrymodalDate"
                 placeholder="required"
                 required
-                onChange={handleChange}
-                value={userInput.datePurchased}
+                onChange={handleUpdate}
+                value={moment(props.modal.datePurchased).format("YYYY-MM-DD")}
               />
             </FormGroup>
           </Form>
         </ModalBody>
         <ModalFooter>
-          <Button color="primary" onClick={postData}>
-            Do Something
+          <Button
+            className="modalButton"
+            onClick={props.modal.update === true ? updateAsset : postData}
+          >
+            {props.modal.update === true ? "Update" : "Submit"}
           </Button>
-          <Button color="secondary" onClick={props.clickedAction}>
+          <Button color="danger" onClick={props.inputNewEntry}>
             Cancel
           </Button>
         </ModalFooter>
@@ -191,17 +215,20 @@ const MapStateToProps = state => {
   return {
     modal: state.modal,
     asset: state.asset,
-    fetch: state.dataFetch
+    fetch: state.dataFetch,
+    dark: state.dark
   };
 };
 const MapDispatchToProps = dispatch => {
   return {
-    clickedAction: () => dispatch(clickedAction),
-    dropdownClickedAction: () => dispatch(dropdownClickedAction),
+    inputNewEntry: () => dispatch(inputNewEntry),
+    openModal: () => dispatch(openModal),
+    updateStateOfModal: (data, field) =>
+      dispatch(updateStateOfModal(data, field)),
     fetchData: () => dispatch(actions.fetchData())
   };
 };
 export default connect(
   MapStateToProps,
   MapDispatchToProps
-)(Example);
+)(Entrymodal);
